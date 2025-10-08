@@ -1,0 +1,239 @@
+.casino-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, rgba(7, 27, 52), 0%, rgba(7, 27, 52), 100%);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+/* Оранжевая квадратная кнопка пополнения */
+.deposit-btn.orange-btn {
+  background: linear-gradient(135deg, #ff7b00 0%, #ff5500 100%);
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px; /* Меньше скругление для квадратного вида */
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  box-shadow: 0 4px 8px rgba(255, 123, 0, 0.3);
+}
+
+.deposit-btn.orange-btn:hover {
+  background: linear-gradient(135deg, #ff5500 0%, #ff7b00 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(255, 123, 0, 0.4);
+}
+
+/* Зеленый баланс */
+.balance-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.balance-amount.green-text {
+  color: #10b981;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.balance-label.green-text {
+  color: #10b981;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.navigation {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.nav-link {
+  color: #cbd5e1;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.nav-link.active {
+  background: rgba(255, 215, 0, 0.1);
+  color: #ffd700;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.balance-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.balance-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.balance-label {
+  font-size: 0.75rem;
+  color: #cbd5e1;
+  margin-top: 0.25rem;
+}
+
+.logout-btn {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid #ef4444;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.login-btn, .register-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.login-btn {
+  background: transparent;
+  color: #ffd700;
+  border: 2px solid #ffd700;
+}
+
+.login-btn:hover {
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.register-btn {
+  background: #ffd700;
+  color: #000;
+}
+
+.register-btn:hover {
+  background: #ffed4e;
+}
+/* Адаптивность */
+@media (max-width: 1200px) {
+  .casino-header {
+    padding: 1rem;
+  }
+  
+  .header-left {
+    gap: 2rem;
+  }
+  
+  .navigation {
+    gap: 1rem;
+  }
+  
+  .promo-badge {
+    min-width: 180px;
+    font-size: 0.8rem;
+  }
+}@media (max-width: 768px) {
+  .casino-header {
+    flex-direction: row;
+    gap: 0.6rem;
+    padding: 10px 12px;
+    flex-wrap: nowrap; /* Запрещаем перенос на новую строку */
+    overflow-x: auto; /* Горизонтальный скролл если не помещается */
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .header-left {
+    flex-shrink: 0;
+    gap: 0.6rem;
+  }
+  
+  .header-right {
+    flex-shrink: 0;
+    gap: 0.6rem;
+    margin-left: auto; /* Прижимаем к правому краю */
+  }
+  
+  .logo {
+    flex-shrink: 0;
+  }
+  
+  .navigation {
+    flex-shrink: 0;
+    gap: 0.4rem;
+  }
+  
+  .nav-link {
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+  }
+  
+  .uz-flag {
+    flex-shrink: 0;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+  }
+  
+  .deposit-btn.orange-btn {
+    flex-shrink: 0;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+    min-width: 70px;
+  }
+  
+  .balance-container {
+    flex-shrink: 0;
+    min-width: 80px;
+  }
+  
+  .balance-amount.green-text {
+    font-size: 0.8rem;
+  }
+  
+  .balance-label.green-text {
+    font-size: 0.65rem;
+  }
+  
+  .logout-btn {
+    flex-shrink: 0;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.75rem;
+    min-width: 50px;
+  }
+  
+  .logout-btn span {
+    display: none; /* Скрываем текст "Выйти" на мобильных */
+  }
+}

@@ -1,0 +1,498 @@
+/* WithdrawModal.css */
+.withdraw-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1rem;
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.withdraw-modal-content {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border: 2px solid #ef4444;
+  border-radius: 16px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 450px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.withdraw-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  animation: headerSlideIn 0.4s ease-out 0.1s both;
+}
+
+@keyframes headerSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.withdraw-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  flex: 1;
+  justify-content: center;
+}
+
+.withdraw-modal-icon {
+  color: #ef4444;
+  animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.back-button {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  animation: backButtonAppear 0.5s ease-out 0.2s both;
+}
+
+@keyframes backButtonAppear {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.back-button:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(-2px);
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  animation: closeButtonAppear 0.5s ease-out 0.2s both;
+}
+
+@keyframes closeButtonAppear {
+  from {
+    opacity: 0;
+    transform: rotate(-90deg);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0);
+  }
+}
+
+.close-button:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  transform: rotate(90deg);
+}
+
+/* Формы */
+.withdraw-form,
+.commission-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: formAppear 0.4s ease-out 0.2s both;
+}
+
+@keyframes formAppear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.min-amount-info {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  animation: infoSlideUp 0.4s ease-out 0.3s both;
+}
+
+@keyframes infoSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  animation: formGroupAppear 0.4s ease-out 0.4s both;
+}
+
+@keyframes formGroupAppear {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.form-label {
+  color: #e2e8f0;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.form-input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  padding: 0.75rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+  transform: scale(1.02);
+}
+
+/* Commission Form Styles */
+.commission-info {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  animation: commissionInfoAppear 0.4s ease-out 0.3s both;
+}
+
+@keyframes commissionInfoAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.calculation-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem 0;
+  animation: calculationAppear 0.4s ease-out 0.4s both;
+}
+
+@keyframes calculationAppear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.calculation-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0;
+  animation: calculationRowSlide 0.3s ease-out both;
+}
+
+.calculation-row:nth-child(1) { animation-delay: 0.5s; }
+.calculation-row:nth-child(2) { animation-delay: 0.55s; }
+.calculation-row:nth-child(3) { animation-delay: 0.6s; }
+
+@keyframes calculationRowSlide {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.calculation-row.total {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 0.75rem;
+  font-weight: bold;
+  color: #ef4444;
+  font-size: 1.1rem;
+}
+
+.payment-details {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  animation: paymentDetailsAppear 0.4s ease-out 0.5s both;
+}
+
+@keyframes paymentDetailsAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.details-label {
+  color: #ef4444;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.card-number {
+  font-family: monospace;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: white;
+  margin: 0.5rem 0;
+  animation: cardNumberGlow 2s ease-in-out infinite;
+}
+
+@keyframes cardNumberGlow {
+  0%, 100% {
+    text-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+  }
+  50% {
+    text-shadow: 0 0 15px rgba(239, 68, 68, 0.8);
+  }
+}
+
+.file-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  animation: fileSectionAppear 0.4s ease-out 0.6s both;
+}
+
+@keyframes fileSectionAppear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.file-warning {
+  color: #f87171;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin: 0;
+  animation: warningPulse 2s ease-in-out infinite;
+}
+
+@keyframes warningPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.file-upload {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  justify-content: center;
+  animation: fileUploadPulse 3s ease-in-out infinite;
+}
+
+@keyframes fileUploadPulse {
+  0%, 100% {
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+  50% {
+    border-color: #ef4444;
+  }
+}
+
+.file-upload:hover {
+  border-color: #ef4444;
+  color: white;
+  transform: scale(1.02);
+  animation: none;
+}
+
+.upload-icon {
+  color: #ef4444;
+}
+
+.file-input {
+  display: none;
+}
+
+/* Кнопки */
+.submit-button {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  animation: buttonAppear 0.4s ease-out 0.7s both;
+}
+
+@keyframes buttonAppear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.submit-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.submit-button:hover::before {
+  left: 100%;
+}
+
+.submit-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+}
+
+.submit-button:disabled {
+  background: #64748b;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.submit-button:disabled:hover::before {
+  left: -100%;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .withdraw-modal-content {
+    margin: 1rem;
+    padding: 1.25rem;
+  }
+  
+  .withdraw-modal-title {
+    font-size: 1.1rem;
+  }
+  
+  .withdraw-modal-header {
+    gap: 0.5rem;
+  }
+}
