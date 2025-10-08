@@ -154,15 +154,23 @@ export default function TradingPlatform() {
 
   // Обновите ваши функции
   const handleBuyClick = () => {
+    const userBalance = parseFloat(localStorage.getItem("balance"));
+    if (userBalance <= 0) {
+      alert(`Недостаточно средств для открытия позиции. ${userBalance}`);
+      return;
+    }
+
+    console.log(`${userBalance} sadasdasd`)
+
     const entry = {
       id: Date.now(),
       type: 'buy',
       pair: selectedPair,
       price: currentPrice,
-      amount: orderAmount,
+      amount: userBalance,
       leverage: leverage,
-      margin: orderAmount,
-      positionSize: orderAmount * leverage,
+      margin: userBalance,
+      positionSize: userBalance * leverage,
       time: Date.now(),
       timestamp: new Date().toLocaleTimeString()
     };
@@ -172,15 +180,21 @@ export default function TradingPlatform() {
   };
 
   const handleSellClick = () => {
+    const userBalance = parseFloat(localStorage.getItem("balance"));
+    if (userBalance <= 0) {
+      alert("Недостаточно средств для открытия позиции.");
+      return;
+    }
+    
     const entry = {
       id: Date.now(),
       type: 'sell',
       pair: selectedPair,
       price: currentPrice,
-      amount: orderAmount,
+      amount: userBalance,
       leverage: leverage,
-      margin: orderAmount,
-      positionSize: orderAmount * leverage,
+      margin: userBalance,
+      positionSize: userBalance * leverage,
       time: Date.now(),
       timestamp: new Date().toLocaleTimeString()
     };
@@ -433,7 +447,7 @@ export default function TradingPlatform() {
                     </div>
                     <div className="position-field">
                       <div className="position-label">Margin</div>
-                      <div className="position-value">${entry.margin.toFixed(2)}</div>
+                      <div className="position-value">${entry.margin}</div>
                     </div>
                     <div className="position-field">
                       <div className="position-label">Position Size</div>

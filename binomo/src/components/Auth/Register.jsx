@@ -56,7 +56,21 @@ export default function Register() {
         // Redirect to trading platform
         navigate('/trading');
       } else {
-        setError(data.message || 'Registration failed. Please try again.');
+        // 👇 Проверяем формат ошибки
+        if (Array.isArray(data) && data.length > 0) {
+          // Если ошибка связана с паролем
+          if (data[0].loc && data[0].loc.includes('password')) {
+            setError('Ненадёжный пароль. Пример безопасного пароля: HardPa$$w0rd!iamthewinner');
+          } else {
+            setError(data[0].msg || 'Ошибка валидации данных.');
+          }
+        } else if (data.detail) {
+          setError(data.detail);
+        } else if (data.message) {
+          setError(data.message);
+        } else {
+          setError('Ненадёжный пароль. Пример безопасного пароля: HardPa$$w0rd!iamthewinner');
+        }
       }
     } catch (err) {
       setError('Failed to connect to server. Make sure backend is running on port 8080.');
