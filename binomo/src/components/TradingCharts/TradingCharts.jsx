@@ -300,7 +300,7 @@ export default function TradingPlatform() {
       positionSize: orderAmount * leverage,
       time: Date.now(),
       timestamp: new Date().toLocaleTimeString(),
-      expiresAt: Date.now() + (1 * 60 * 1000)
+      expiresAt: Date.now() + (30 * 60 * 1000)
     };
         
     setEntries(prev => [...prev, entry]);
@@ -316,7 +316,7 @@ export default function TradingPlatform() {
     const timerId = setTimeout(() => {
       autoClosePosition(entry.id);
       delete timersRef.current[entry.id];
-    }, 1 * 60 * 1000); // ⚡ 5 минут
+    }, 30 * 60 * 1000); // ⚡ 5 минут
     
     timersRef.current[entry.id] = timerId;
     
