@@ -125,9 +125,10 @@ export default function PaymentModal({ isOpen, onClose }) {
             >
               <option value="">Выберите сумму</option>
               <option value="500000">500 000 UZS</option>
-              <option value="600000">600 000 UZS</option>
-              <option value="800000">800 000 UZS</option>
               <option value="1000000">1 000 000 UZS</option>
+              <option value="1500000">1 500 000 UZS</option>
+              <option value="2000000">2 000 000 UZS</option>
+              <option value="2500000">2 500 000 UZS</option>
             </select>
           </div>
 

@@ -38,13 +38,12 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 8px;
+  margin: 0;
 }
 
 .header-left p {
   color: #94a3b8;
   font-size: 14px;
-  margin-top: 8px;
 }
 
 .price-display {
@@ -58,13 +57,13 @@
   line-height: 1;
 }
 
-.price-label {
+.price-label-trading-screen {
   color: #10b981;
   font-size: 12px;
   margin-top: 8px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  animation: pulse 2s ease-in-out infinite;
+  /*animation: pulse 2s ease-in-out infinite;*/
 }
 
 /* Pair Selector */
@@ -583,3 +582,104 @@
 
 
 /*Test  */
+
+/* Добавь в TradingPlatform.css */
+
+.position-item {
+  position: relative;
+  background: rgba(51, 51, 71, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  align-items: center;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+/* Timer Bar at Top */
+.position-timer-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.timer-progress {
+  height: 100%;
+  transition: width 1s linear;
+  box-shadow: 0 0 10px currentColor;
+}
+
+/* Timer Value */
+.timer-value {
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 18px;
+  color: #f59e0b;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Position Item - добавь padding-top для таймер бара */
+.position-item {
+  padding-top: 24px; /* Больше места сверху для таймер бара */
+}
+
+.position-item:hover {
+  background: rgba(51, 51, 71, 0.8);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Close Button - сделай более заметной */
+.close-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.3);
+}
+
+.close-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5);
+}
+
+.close-btn:active {
+  transform: scale(0.98);
+}
+
+/* Expiring Soon Animation */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+.position-item.expiring-soon {
+  animation: shake 0.5s ease-in-out;
+  border-color: #ef4444;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}

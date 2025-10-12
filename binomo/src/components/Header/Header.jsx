@@ -1,25 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Crown, Sparkles, Coins, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PaymentModal from '../UI/PaymentModal';
 import './Header.css';
+import { UserContext } from "../../context/UserContext"
+
 import { CONFIG_API_BASE_URL } from '../config/constants';
 
 const API_BASE_URL = CONFIG_API_BASE_URL;
 
 const Header = () => {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userName, setUserName] = useState('Guest');
   const [userLevel, setUserLevel] = useState('Trader');
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [userBalance, setUserBalance] = useState(0);
-  const [entries, setEntries] = useState([]);
+
+  // Получаем баланс из Context
+  const { userBalance, setUserBalance, isAuthenticated, setIsAuthenticated } = useContext(UserContext);
+
 
   // Загрузка позиций из localStorage
   const loadEntriesFromStorage = () => {
     try {
-      const saved = localStorage.getItem('trading_positions');
+      const saved = sessionStorage.getItem('trading_positions');
       return saved ? JSON.parse(saved) : [];
     } catch (error) {
       console.error('Error loading positions from localStorage:', error);
@@ -27,10 +30,16 @@ const Header = () => {
     }
   };
 
-  useEffect(() => {
+   useEffect(() => {
     const fetchBalance = async () => {
       try {
-        const token = localStorage.getItem("access_token"); // если хранишь токен
+        const token = localStorage.getItem("access_token");
+        
+        if (!token) {
+          console.log('No token, skipping balance fetch');
+          return;
+        }
+
         const response = await fetch(`${API_BASE_URL}/api/user/get_balance`, {
           headers: {
             "Authorization": `Bearer ${token}`,
@@ -42,38 +51,35 @@ const Header = () => {
         }
 
         const data = await response.json();
-
-        setUserBalance(parseFloat(data.balance));
-        localStorage.setItem("balance", data.balance)
+        const balance = parseFloat(data.balance);
+        
+        console.log('✅ Баланс загружен с бэкенда:', balance);
+        
+        // Обновляем через Context (автоматически сохранится в sessionStorage)
+        setUserBalance(balance);
+        
       } catch (err) {
-        console.error(err);
+        console.error('❌ Ошибка загрузки баланса:', err);
       }
     };
 
-    // Загружаем сохраненные позиции
-    const savedEntries = loadEntriesFromStorage();
-    if (savedEntries.length > 0) {
-      setEntries(savedEntries);
-    }
-
     fetchBalance();
-  }, []);
+  }, []); // Выполняется один раз при монтировании
 
+  // Проверка токена
   useEffect(() => {
-    // Проверяем токен при загрузке
     const token = localStorage.getItem('access_token');
     if (token) {
       setIsAuthenticated(true);
-      // Здесь можно получить данные пользователя с бэкенда
-      // Пока используем моковые данные
-      setUserName('John Doe');
-      setUserBalance(10000);
+      setUserName('John Doe'); // Замени на реальные данные с API
     }
-  }, []);
+  }, [setIsAuthenticated]);
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
+    sessionStorage.removeItem('balance');
     setIsAuthenticated(false);
+    setUserBalance(0);
     navigate('/login');
   };
 
@@ -101,7 +107,10 @@ const Header = () => {
               {/* Зеленый баланс в UZS с зеленым текстом */}
               <div className="balance-container">
                 <div className="balance-amount green-text">
-                  {userBalance.toLocaleString()} UZS
+                  {userBalance.toLocaleString('ru-RU', { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                  })} UZS
                 </div>
                 <div className="balance-label green-text">РЕАЛЬНЫЙ БАЛАНС</div>
               </div>

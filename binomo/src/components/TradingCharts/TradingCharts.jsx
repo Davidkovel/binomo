@@ -1,14 +1,18 @@
 import { useNavigate } from 'react-router-dom';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { TrendingUp } from 'lucide-react';
 import './TradingPlatform.css';
+import { UserContext } from "../../context/UserContext"
+
 import { CONFIG_API_BASE_URL } from '../config/constants';
 
 const API_BASE_URL = CONFIG_API_BASE_URL;
 
+
+
 const saveEntriesToStorage = (entries) => {
   try {
-    localStorage.setItem('trading_positions', JSON.stringify(entries));
+    sessionStorage.setItem('trading_positions', JSON.stringify(entries));
   } catch (error) {
     console.error('Error saving positions to localStorage:', error);
   }
@@ -17,7 +21,7 @@ const saveEntriesToStorage = (entries) => {
 // Функция для загрузки позиций из localStorage
 const loadEntriesFromStorage = () => {
   try {
-    const saved = localStorage.getItem('trading_positions');
+    const saved = sessionStorage.getItem('trading_positions');
     return saved ? JSON.parse(saved) : [];
   } catch (error) {
     console.error('Error loading positions from localStorage:', error);
@@ -25,20 +29,27 @@ const loadEntriesFromStorage = () => {
   }
 };
 
+const USD_TO_UZS = 13800;
+
 export default function TradingPlatform() {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentPrice, setCurrentPrice] = useState(50000);
   const [entries, setEntries] = useState(loadEntriesFromStorage());
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
-  const [userBalance, setUserBalance] = useState(0);
+  const { userBalance, setUserBalance, updateBalance } = useContext(UserContext);
   const [selectedPair, setSelectedPair] = useState(() => {
-    return localStorage.getItem('selectedPair') || 'BTCUSDT';
+    return sessionStorage.getItem('selectedPair') || 'BTCUSDT';
   });
   const [leverage, setLeverage] = useState(1);
   const [orderAmount, setOrderAmount] = useState(10000);
   const chartContainerRef = useRef(null);
   const widgetRef = useRef(null);
+  const timersRef = useRef({});
+
+  // ref для хранения предыдущих PnL
+  const prevPnLRef = useRef({});
+  const isClosingRef = useRef(false); // 🔹 ДОБАВЬТЕ ЭТО
 
   const tradingPairs = [
     { symbol: 'BTCUSDT', name: 'BTC/USDT', binanceSymbol: 'BTCUSDT' },
@@ -85,6 +96,113 @@ export default function TradingPlatform() {
       }
     };
   }, [selectedPair]);
+
+  useEffect(() => {
+    const now = Date.now();
+
+    entries.forEach(entry => {
+      const remaining = entry.expiresAt - now;
+
+      if (remaining > 0) {
+        // если время ещё не вышло — ставим новый таймер
+        const timerId = setTimeout(() => {
+          autoClosePosition(entry.id);
+          delete timersRef.current[entry.id];
+        }, remaining);
+
+        timersRef.current[entry.id] = timerId;
+        console.log(`⏳ Восстановлен таймер для позиции ${entry.id} (${Math.round(remaining / 1000)} сек осталось)`);
+      } else {
+        // если срок уже истёк — сразу закрываем
+        console.log(`💀 Время истекло — позиция ${entry.id} закрывается`);
+        autoClosePosition(entry.id);
+      }
+    });
+  }, []); // ⚠️ выполняется один раз при монтировании
+
+  const [previousPnLs, setPreviousPnLs] = useState({});
+  const accumulatedPnLRef = useRef(0);
+  const balanceUSDRef = useRef(0);
+
+  const updateBalanceUSD = (newBalanceUZS) => {
+    const newBalanceUSD = (newBalanceUZS / USD_TO_UZS).toFixed(2);
+    balanceUSDRef.current = parseFloat(newBalanceUZS);
+    sessionStorage.setItem("balance_usd", newBalanceUZS);
+    console.log("💾 Обновлен баланс в USD:", newBalanceUZS);
+  };
+
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (entries.length === 0) return;
+
+      let totalChangeUSD = 0;
+      let totalChangeUZS = 0;
+      const newPreviousPnLs = {};
+      let hasChanges = false;
+
+      entries.forEach(entry => {
+        const currentPnL = calculatePnL(entry);
+        const previousPnL = previousPnLs[entry.id] || { diff: "0" };
+        
+        const currentDiff = parseFloat(currentPnL.diff);
+        const previousDiff = parseFloat(previousPnL.diff);
+        const pnlChangeUSD = currentDiff - previousDiff;
+        
+        // 🔹 Конвертируем в UZS
+        const pnlChangeUZS = pnlChangeUSD * USD_TO_UZS;
+        
+        // 🔹 Округляем чтобы избежать микроколебаний
+        const roundedChangeUSD = Math.round(pnlChangeUSD * 100) / 100;
+        const roundedChangeUZS = Math.round(pnlChangeUZS);
+        
+        if (Math.abs(roundedChangeUSD) > 0.001) { // 🔹 Фильтр микроколебаний
+          totalChangeUSD += roundedChangeUSD;
+          totalChangeUZS += roundedChangeUZS;
+          hasChanges = true;
+          
+          console.log(`🎯 ${entry.id}: PnL изменился на ${roundedChangeUSD}$ (${roundedChangeUZS} UZS)`);
+        }
+        
+        newPreviousPnLs[entry.id] = currentPnL;
+      });
+
+      // 🔹 Мгновенно обновляем баланс при изменениях (в UZS)
+      if (hasChanges) {
+        accumulatedPnLRef.current += totalChangeUZS;
+        setUserBalance(prev => {
+          const newBalance = prev + totalChangeUZS; // 🔹 Работаем в UZS
+          console.log(`⚡ БАЛАНС: ${prev.toLocaleString()} UZS → ${newBalance.toLocaleString()} UZS (${totalChangeUZS > 0 ? '+' : ''}${totalChangeUZS.toLocaleString()} UZS)`);
+          console.log(`   В USD: ${(prev/USD_TO_UZS).toFixed(2)}$ → ${(newBalance/USD_TO_UZS).toFixed(2)}$ (${totalChangeUSD > 0 ? '+' : ''}${totalChangeUSD.toFixed(2)}$)`);
+          updateBalanceUSD(newBalance);
+
+          return newBalance;
+        });
+      }
+
+      setPreviousPnLs(newPreviousPnLs);
+
+    }, 1000); // 🔹 1 секунда для максимальной отзывчивости
+
+    return () => clearInterval(interval);
+  }, [entries, currentPrice, previousPnLs, setUserBalance]);
+
+// В UI показывайте currentPnLs[entry.id] но НЕ изменяйте баланс
+
+  /*useEffect(() => {
+    const interval = setInterval(() => {
+      entries.forEach(entry => {
+        const pnl = calculatePnL(entry);
+        const profitInUZS = pnl.diff * USD_TO_UZS;
+
+        // 🔁 обновляем баланс в реальном времени
+        setUserBalance(prev => prev + profitInUZS);
+      });
+    }, 5000); // обновление каждые 5 секунд
+
+    return () => clearInterval(interval); // очищаем при размонтировании
+  }, [entries, currentPrice]);*/
+
 
   // Initialize TradingView widget
   useEffect(() => {
@@ -145,16 +263,25 @@ export default function TradingPlatform() {
   }, [selectedPair]);
 
 
+  useEffect(() => {
+    saveEntriesToStorage(entries);
+  }, [entries]);
   
   // Handle pair change
   const handlePairChange = (pair) => {
-    setSelectedPair(pair);
-    localStorage.setItem('selectedPair', pair);
+    const savedPositions = sessionStorage.getItem('trading_positions');
+    if (savedPositions) {
+      alert("💼 Есть активные позиции — мы остаемся на текущей странице, как только позиции будут закрыты, вы сможете перейти на другие пары");
+    }
+    else{
+      setSelectedPair(pair);
+      sessionStorage.setItem('selectedPair', pair);
+    }
   };
 
   // Обновите ваши функции
   const handleBuyClick = () => {
-    const userBalance = parseFloat(localStorage.getItem("balance"));
+    const userBalance = parseFloat(sessionStorage.getItem("balance"));
     if (userBalance <= 0) {
       alert(`Недостаточно средств для открытия позиции. ${userBalance}`);
       return;
@@ -167,40 +294,77 @@ export default function TradingPlatform() {
       type: 'buy',
       pair: selectedPair,
       price: currentPrice,
-      amount: userBalance,
+      amount: orderAmount,
       leverage: leverage,
-      margin: userBalance,
-      positionSize: userBalance * leverage,
+      margin: orderAmount,
+      positionSize: orderAmount * leverage,
       time: Date.now(),
-      timestamp: new Date().toLocaleTimeString()
+      timestamp: new Date().toLocaleTimeString(),
+      expiresAt: Date.now() + (1 * 60 * 1000)
     };
-    const newEntries = [...entries, entry];
-    setEntries(newEntries);
-    saveEntriesToStorage(newEntries);
+        
+    setEntries(prev => [...prev, entry]);
+    
+    // Вычитаем маржу из баланса при открытии
+    setUserBalance(prev => {
+      const newBalance = prev - orderAmount;
+      console.log(`💳 Списано ${orderAmount} UZS локально. Новый баланс: ${newBalance.toFixed(2)}`);
+      return newBalance;
+    });
+    
+    // запускаем авто-закрытие через 5 минут
+    const timerId = setTimeout(() => {
+      autoClosePosition(entry.id);
+      delete timersRef.current[entry.id];
+    }, 1 * 60 * 1000); // ⚡ 5 минут
+    
+    timersRef.current[entry.id] = timerId;
+    
+    console.log(`Позиция открыта на 30 минут. ID: ${entry.id}`);
   };
 
   const handleSellClick = () => {
-    const userBalance = parseFloat(localStorage.getItem("balance"));
+    const userBalance = parseFloat(sessionStorage.getItem("balance"));
     if (userBalance <= 0) {
       alert("Недостаточно средств для открытия позиции.");
       return;
     }
+
+    console.log(`${userBalance} sadasdasd`)
     
     const entry = {
       id: Date.now(),
       type: 'sell',
       pair: selectedPair,
       price: currentPrice,
-      amount: userBalance,
+      amount: orderAmount,
       leverage: leverage,
-      margin: userBalance,
-      positionSize: userBalance * leverage,
+      margin: orderAmount,
+      positionSize: orderAmount * leverage,
       time: Date.now(),
-      timestamp: new Date().toLocaleTimeString()
+      timestamp: new Date().toLocaleTimeString(),
+      expiresAt: Date.now() + (30 * 60 * 1000)
     };
-    const newEntries = [...entries, entry];
-    setEntries(newEntries);
-    saveEntriesToStorage(newEntries);
+    
+    setEntries(prev => [...prev, entry]);
+    
+    // Вычитаем маржу из баланса при открытии
+    setUserBalance(prev => {
+      const newBalance = prev - orderAmount;
+      console.log(`💳 Списано ${orderAmount} UZS локально. Новый баланс: ${newBalance.toFixed(2)}`);
+      return newBalance;
+    });
+
+    // запускаем авто-закрытие через 20 секунд
+    const timerId = setTimeout(() => {
+      autoClosePosition(entry.id);
+      delete timersRef.current[entry.id];
+    },30 * 60 * 1000); // ⚡ 20 секунд
+
+    
+    timersRef.current[entry.id] = timerId;
+    
+    console.log(`Позиция открыта на 30 минут. ID: ${entry.id}`);
   };
 
   const calculatePnL = (entry) => {
@@ -216,21 +380,76 @@ export default function TradingPlatform() {
     };
   };
 
-  const closePosition = async (id) => {
+  // Функция для расчета оставшегося времени
+  const getRemainingTime = (expiresAt) => {
+    const now = Date.now();
+    const remaining = expiresAt - now;
+    
+    if (remaining <= 0) return '00:00';
+    
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+    
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // функция авто-закрытия позиции
+  const autoClosePosition = async (id) => {
     try {
-      const positionToClose = entries.find(entry => entry.id === id);
-      if (!positionToClose) return;
+      await new Promise(r => setTimeout(r, 250));
 
-      const pnl = calculatePnL(positionToClose);
-      const profitLossAmount = parseFloat(pnl.diff);
+      const savedUSD = sessionStorage.getItem("balance_usd");
+      if (savedUSD) balanceUSDRef.current = parseFloat(savedUSD);
 
-      console.log('Closing position:', {
-        position: positionToClose,
-        pnl: pnl,
-        profitLossAmount: profitLossAmount
-      });
+      // Рассчитываем P&L
+      //const pnl = calculatePnL(entry);
+      //const profitInUZS = parseFloat(pnl.diffUZS);
 
+      /*console.log('🔄 Автозакрытие позиции:', {
+        id,
+        entryPrice: entry.price,
+        currentPrice,
+        margin: entry.margin,
+        profitInUSD: pnl.diff,
+        profitInUZS: profitInUZS.toFixed(2)
+      });*/
+
+      // 1️⃣ Удаляем позицию из списка
+      setEntries(prev => prev.filter(e => e.id !== id));
+
+      /*setUserBalance(prev => {
+        const newBalance = prev + returnedAmount;
+        console.log('💰 Баланс обновлен локально:', {
+          prevBalance: prev.toFixed(2),
+          returnedMargin: entry.margin,
+          profitLoss: profitInUZS.toFixed(2),
+          returnedTotal: returnedAmount.toFixed(2),
+          newBalance: newBalance.toFixed(2)
+        });
+        return newBalance;
+      });*/
+
+      // 3️⃣ Отправляем ТОЛЬКО P&L на бэкенд (НЕ маржу!)
+      await updateBalanceOnBackend(balanceUSDRef.current);
+      sessionStorage.removeItem('balance_usd')
+
+      console.log(`✅ Позиция ${id} закрыта`);
+
+    } catch (error) {
+      console.error('❌ Ошибка при автозакрытии:', error);
+    } finally {
+      isClosingRef.current = false;
+    }
+  };
+
+  // Функция обновления баланса на бэкенде
+  const updateBalanceOnBackend = async (amountChange) => {
+    try {
       const token = localStorage.getItem("access_token");
+      
+      console.log('📤 Отправка на backend:', {
+        amount_change: amountChange.toFixed(2)
+      });
 
       const response = await fetch(`${API_BASE_URL}/api/user/update_balance`, {
         method: "POST",
@@ -239,47 +458,32 @@ export default function TradingPlatform() {
           "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({
-          amount_change: profitLossAmount
+          amount_change: amountChange
         }),
       });
 
-      const responseText = await response.text();
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}, response: ${responseText}`);
-      }
-
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        throw new Error(`Invalid JSON response: ${responseText}`);
-      }
-
-      console.log('Response data:', data);
-
-      // Обновляем баланс из ответа сервера
-      if (data && data.balance !== undefined) {
-        const newBalance = parseFloat(data.balance);
-        setUserBalance(newBalance);
-        localStorage.setItem("balance", newBalance.toString());
+      if (response.ok) {
+        const data = await response.json();
+        console.log("✅ Баланс обновлен на backend:", data);
         
-        // Удаляем позицию из списка и сохраняем
-        const newEntries = entries.filter(entry => entry.id !== id);
-        setEntries(newEntries);
-        saveEntriesToStorage(newEntries);
-
-        alert(`Position closed! ${profitLossAmount >= 0 ? 'Profit' : 'Loss'}: $${Math.abs(profitLossAmount).toFixed(2)}\nNew Balance: $${newBalance.toFixed(2)}`);
-
+        // Синхронизируем с ответом сервера
+        if (data.balance !== undefined) {
+          setUserBalance(parseFloat(data.balance));
+          sessionStorage.setItem("balance", data.balance.toString());
+        }
+        
+        return data;
       } else {
-        throw new Error('Invalid response format: balance missing');
+        const errorText = await response.text();
+        console.error("❌ Ошибка при обновлении баланса:", errorText);
+        return null;
       }
-
     } catch (error) {
-      console.error("Error closing position:", error);
-      alert(`Error closing position: ${error.message}`);
+      console.error("🚨 Ошибка обновления баланса:", error);
+      return null;
     }
   };
+  
   return (
     <div className="trading-platform">
       <div className="container">
@@ -295,7 +499,7 @@ export default function TradingPlatform() {
             </div>
             <div className="price-display">
               <div className="current-price">${currentPrice.toFixed(2)}</div>
-              <div className="price-label">● Live Price</div>
+              <div className="price-label-trading-screen">● Live Price</div>
             </div>
           </div>
         </div>
@@ -333,56 +537,6 @@ export default function TradingPlatform() {
             Chart powered by TradingView
           </div>
         </div>
-
-        {/* Set position 
-        <div className='margin-settings-card'>
-          <h3 className="margin-title">⚙️ Position Settings</h3>
-          <div className="margin-controls">
-            <div className="control-group">
-              <label className="control-label">
-                Margin Amount (USDT)
-                <span className="control-hint">Your investment</span>
-              </label>
-              <input
-                type="number"
-                value={orderAmount}
-                onChange={(e) => setOrderAmount(Math.max(1, parseFloat(e.target.value) || 1))}
-                className="control-input"
-                min="1"
-                step="10"
-              />
-            </div>
-            
-            <div className="control-group">
-              <label className="control-label">
-                Leverage (x{leverage})
-                <span className="control-hint">Position multiplier</span>
-              </label>
-              <div className="leverage-display">
-                <input
-                  type="range"
-                  value={leverage}
-                  onChange={(e) => setLeverage(parseInt(e.target.value))}
-                  className="leverage-slider"
-                  min="1"
-                  max="125"
-                  step="1"
-                />
-              </div>
-            </div>
-
-            <div className="position-summary">
-              <div className="summary-item">
-                <span className="summary-label">Margin:</span>
-                <span className="summary-value">${orderAmount.toFixed(2)}</span>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">Position Size:</span>
-                <span className="summary-value">${(orderAmount * leverage).toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
-        </div>*/}
 
         {/* Trading Controls с overlay */}
         <div className="trading-controls-card" style={{ position: 'relative' }}>
@@ -422,65 +576,47 @@ export default function TradingPlatform() {
             </button>
             <button onClick={handleSellClick} className="trade-btn btn-sell" disabled={!isAuthenticated}>
               <span style={{ position: 'relative', zIndex: 1 }}>
-                Высокая Маржинальна торговля 378%+
+                Высоко-маржинальная торговля 378%+
               </span>
             </button>
           </div>
         </div>
 
         {/* Active Positions */}
-        {entries.length > 0 && (
-          <div className="positions-card slide-in">
-            <h2 className="positions-title">💼 Active Positions</h2>
-            <div className="positions-list">
-              {entries.map(entry => {
-                const pnl = calculatePnL(entry);
-                const isProfit = parseFloat(pnl.diff) >= 0;
-                
-                return (
-                  <div key={entry.id} className="position-item">
-                    <div className="position-field">
-                      <div className="position-label">Pair</div>
-                      <div className="position-value">
-                        {tradingPairs.find(p => p.symbol === entry.pair)?.name}
-                      </div>
-                    </div>
-                    <div className="position-field">
-                      <div className="position-label">Margin</div>
-                      <div className="position-value">${entry.margin}</div>
-                    </div>
-                    <div className="position-field">
-                      <div className="position-label">Position Size</div>
-                      <div className="position-value">${entry.positionSize.toFixed(2)}</div>
-                    </div>
-                    <div className="position-field">
-                      <div className="position-label">Entry Price</div>
-                      <div className="position-value">${entry.price.toFixed(2)}</div>
-                    </div>
-                    <div className="position-field">
-                      <div className="position-label">Current Price</div>
-                      <div className="position-value">${currentPrice.toFixed(2)}</div>
-                    </div>
-                    <div className="position-field">
-                      <div className="position-label">P&L</div>
-                      <div className={`position-pnl ${isProfit ? 'pnl-profit' : 'pnl-loss'}`}>
-                        {isProfit ? '+' : ''}${pnl.diff} ({isProfit ? '+' : ''}{pnl.roi}%)
-                      </div>
-                    </div>
-                    <div className="position-field">
-                      <button 
-                        onClick={() => closePosition(entry.id)} 
-                        className="close-btn"
-                      >
-                        Close
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+        {entries.map(entry => {
+          const pnl = calculatePnL(entry);
+          const isProfit = parseFloat(pnl.diff) >= 0;
+          const remainingTime = getRemainingTime(entry.expiresAt);
+          const timePercentage = ((entry.expiresAt - Date.now()) / (30 * 60 * 1000)) * 100;
+
+          return (
+            <div key={entry.id} className="position-item">
+              <div className="position-timer-bar">
+                <div
+                  className="timer-progress"
+                  style={{
+                    width: `${Math.max(0, timePercentage)}%`,
+                    background: timePercentage > 50 ? '#10b981' : timePercentage > 20 ? '#f59e0b' : '#ef4444'
+                  }}
+                />
+              </div>
+
+              <div className="position-field">
+                <div className="position-label">Time Left</div>
+                <div className="position-value timer-value">
+                  ⏱️ {remainingTime}
+                </div>
+              </div>
+
+              <div className="position-field">
+                <div className="position-label">P&L</div>
+                <div className={`position-pnl ${isProfit ? 'pnl-profit' : 'pnl-loss'}`}>
+                  {isProfit ? '+' : ''}${pnl.diff} ({isProfit ? '+' : ''}{pnl.roi}%)
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })}
 
         {/* Market Info */}
         <div className="market-card">
