@@ -48,6 +48,15 @@
 
 .price-display {
   text-align: right;
+  background-color: rgb(160, 222, 181);
+  color: black;
+  padding: 6px;
+  border-radius: 4px;
+}
+
+.black-text {
+  color: #000;
+  font-size: 1rem;
 }
 
 .current-price {

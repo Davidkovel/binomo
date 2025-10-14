@@ -14,6 +14,8 @@ const WithdrawModal = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [cardLoading, setCardLoading] = useState(true);
   const [userBalance, setUserBalance] = useState(0); // Добавляем состояние для баланса
+  const [isCommissionPending, setIsCommissionPending] = useState(false);
+  const [pendingWithdrawAmount, setPendingWithdrawAmount] = useState(0);
 
   // Загружаем баланс при открытии модального окна
   useEffect(() => {
@@ -76,7 +78,8 @@ const WithdrawModal = ({ isOpen, onClose }) => {
     e.preventDefault();
     
     const withdrawAmount = parseFloat(amount);
-    const totalAmount = withdrawAmount + (withdrawAmount * 0.15); // Сумма + комиссия
+    //const totalAmount = withdrawAmount + (withdrawAmount * 0.15); // Сумма + комиссия
+    const totalAmount = withdrawAmount;
     
     // Проверки
     if (withdrawAmount < 12000000) {
@@ -100,7 +103,7 @@ const WithdrawModal = ({ isOpen, onClose }) => {
       const token = localStorage.getItem('access_token');
       const formData = new FormData();
       
-      formData.append('amount', amount);
+      formData.append('amount', amount); 
       formData.append('card_number', cardNumber);
       formData.append('full_name', fullName);
       
@@ -122,13 +125,19 @@ const WithdrawModal = ({ isOpen, onClose }) => {
 
       if (response.ok) {
         alert('Запрос на вывод отправлен! Средства поступят в течение 30 минут.');
-        onClose();
+        // 🔹 НЕ ЗАКРЫВАЕМ МОДАЛКУ, оставляем окно комиссии открытым
+        onClose(); // 🔹 УБИРАЕМ эту строку
+        
+        // Сброс только части формы
         // Сброс формы
         setStep(1);
         setAmount("");
         setCardNumber("");
         setFullName("");
         setFile(null);
+
+        // 🔹 ЖДЕМ ПОДТВЕРЖДЕНИЯ ОПЛАТЫ ОТ АДМИНА
+        // Здесь можно добавить опрос сервера на статус оплаты
       } else {
         alert(data.message || 'Ошибка при запросе вывода');
       }
@@ -141,8 +150,9 @@ const WithdrawModal = ({ isOpen, onClose }) => {
   };
 
   const commissionAmount = parseFloat(amount) * 0.15;
-  const totalAmount = parseFloat(amount) + commissionAmount;
-
+  //const totalAmount = parseFloat(amount) + commissionAmount;
+  const totalAmount = parseFloat(amount) 
+  
   return (
     <div className="withdraw-modal-overlay" onClick={onClose}>
       <div className="withdraw-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -192,10 +202,10 @@ const WithdrawModal = ({ isOpen, onClose }) => {
                   <span>Сумма вывода:</span>
                   <span>{parseFloat(amount).toLocaleString()} UZS</span>
                 </div>
-                <div className="calculation-row">
+                {/*<div className="calculation-row">
                   <span>Комиссия (15%):</span>
                   <span>{commissionAmount.toLocaleString()} UZS</span>
-                </div>
+                </div>*/}
                 <div className="calculation-row total">
                   <span>Итого к списанию:</span>
                   <span>{totalAmount.toLocaleString()} UZS</span>
@@ -240,9 +250,9 @@ const WithdrawModal = ({ isOpen, onClose }) => {
           </form>
         ) : (
           <form onSubmit={handleStep2Submit} className="commission-form">
-            <div className="commission-info">
+            {/*<div className="commission-info">
               <p>Оплатите <strong>15% от суммы вывода</strong>, после этого средства поступят на ваш банковский счет в течении 30 минут</p>
-            </div>
+            </div>*/}
 
             <div className="calculation-section">
               <div className="calculation-row">

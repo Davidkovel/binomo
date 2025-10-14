@@ -142,6 +142,11 @@ export default function BalancePage() {
             <button 
                 className={`action-btn withdraw-action ${activeTab === 'withdraw' ? 'active' : ''}`}
                 onClick={() => {
+                    const positions = JSON.parse(sessionStorage.getItem('trading_positions')) || [];
+                    if (positions.length > 0) {
+                        alert('❌ Нельзя выполнить вывод средств, пока есть открытые позиции!');
+                        return;
+                    }
                     setActiveTab('withdraw');
                     setIsWithdrawModalOpen(true); // Открываем WithdrawModal
                 }}

@@ -105,7 +105,7 @@ const Header = () => {
           {isAuthenticated ? (
             <>
               {/* Зеленый баланс в UZS с зеленым текстом */}
-              <div className="balance-container">
+              {/*<div className="balance-container">
                 <div className="balance-amount green-text">
                   {userBalance.toLocaleString('ru-RU', { 
                     minimumFractionDigits: 2, 
@@ -113,14 +113,14 @@ const Header = () => {
                   })} UZS
                 </div>
                 <div className="balance-label green-text">РЕАЛЬНЫЙ БАЛАНС</div>
-              </div>
+              </div>*/}
 
               {/* Желтая кнопка "Пополнить" */}
               <button 
                 className="deposit-btn orange-btn"
                 onClick={handleDepositClick}
               >
-                <span>Пополнить</span>
+                <span>личный кабинет</span>
               </button>
 
               {/* Кнопка выхода */}
