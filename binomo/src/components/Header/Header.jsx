@@ -78,6 +78,10 @@ const Header = () => {
   const handleLogout = () => {
     localStorage.removeItem('access_token');
     sessionStorage.removeItem('balance');
+    localStorage.removeItem("typePosition");
+    sessionStorage.removeItem("selectedPair");
+    sessionStorage.removeItem("balance_usd");
+    
     setIsAuthenticated(false);
     setUserBalance(0);
     navigate('/login');
