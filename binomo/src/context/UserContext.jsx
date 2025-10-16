@@ -28,7 +28,7 @@ export const UserProvider = ({ children }) => {
     // Обновляем локально
     setUserBalance(balance);
     sessionStorage.setItem("balance", balance.toString());
-    console.log('💰 Context: Баланс обновлен локально:', balance.toFixed(2));
+    //console.log('💰 Context: Баланс обновлен локально:', balance.toFixed(2));
   };
 
   /*const updateBalance = async (newBalance) => {

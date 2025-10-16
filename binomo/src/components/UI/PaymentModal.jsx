@@ -12,6 +12,7 @@ export default function PaymentModal({ isOpen, onClose }) {
   const [loading, setLoading] = useState(false);
   const [cardNumber, setCardNumber] = useState(""); 
   const [cardLoading, setCardLoading] = useState(true);
+  const [provider, setProvider] = useState('');
 
 
   const fetchCardNumber = async () => {
@@ -115,21 +116,28 @@ export default function PaymentModal({ isOpen, onClose }) {
 
           {/* Выбор суммы */}
           <div className="amount-section">
-            <label className="section-label">Выберите сумму:</label>
-            <select 
-              value={amount} 
+            <label className="section-label">Введите сумму пополнения:</label>
+            <input
+              type="number"
+              value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="amount-select"
+              placeholder="Введите сумму от 500 000 UZS"
+              className="amount-input2"
+              min="500000"
+              step="1000"
               required
               disabled={loading}
-            >
-              <option value="">Выберите сумму</option>
-              <option value="500000">500 000 UZS</option>
-              <option value="1000000">1 000 000 UZS</option>
-              <option value="1500000">1 500 000 UZS</option>
-              <option value="2000000">2 000 000 UZS</option>
-              <option value="2500000">2 500 000 UZS</option>
-            </select>
+            />
+            <div className="min-amount-hint">
+              💰 Минимальная сумма: <strong>500 000 UZS</strong>
+            </div>
+            
+            {/* Валидация суммы */}
+            {amount && Number(amount) < 500000 && (
+              <div className="error-message">
+                ❌ Сумма должна быть не менее 500 000 UZS
+              </div>
+            )}
           </div>
 
           {/* Загрузка файла */}
@@ -156,7 +164,7 @@ export default function PaymentModal({ isOpen, onClose }) {
             <button 
               type="submit" 
               className="submit-button-payment"
-              disabled={loading}
+              disabled={loading || Number(amount) < 500000}
             >
               {loading ? 'Отправка...' : 'Я оплатил'}
             </button>

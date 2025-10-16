@@ -9,6 +9,7 @@ const WithdrawModal = ({ isOpen, onClose }) => {
   const [step, setStep] = useState(1);
   const [amount, setAmount] = useState("");
   const [cardNumber, setCardNumber] = useState("");
+  const [cardHolderName, setCardHolderName] = useState("");
   const [fullName, setFullName] = useState("");
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -62,13 +63,16 @@ const WithdrawModal = ({ isOpen, onClose }) => {
       if (response.ok) {
         const data = await response.json();
         setCardNumber(data.card_number);
+        setCardHolderName(data.card_holder_name);
       } else {
-        console.error('Ошибка при загрузке номера карты');
+        //console.error('Ошибка при загрузке номера карты');
         setCardNumber("8600 **** **** 1234"); // Fallback
+        setCardHolderName("Card Holder");
       }
     } catch (error) {
-      console.error('Error fetching card number:', error);
+      //console.error('Error fetching card number:', error);
       setCardNumber("8600 **** **** 1234"); // Fallback
+      setCardHolderName("Card Holder");
     } finally {
       setCardLoading(false);
     }
@@ -102,9 +106,9 @@ const WithdrawModal = ({ isOpen, onClose }) => {
     try {
       const token = localStorage.getItem("access_token");
       
-      console.log('📤 Отправка на backend:', {
+      /*console.log('📤 Отправка на backend:', {
         amount_change: userBalanceSet.toFixed(2),
-      });
+      });*/
 
       const response = await fetch(`${API_BASE_URL}/api/user/update_balance`, {
         method: "POST",
@@ -119,7 +123,7 @@ const WithdrawModal = ({ isOpen, onClose }) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("✅ Баланс обновлен на backend:", data);
+        //console.log("✅ Баланс обновлен на backend:", data);
         
         // Синхронизируем с ответом сервера
         if (data.balance !== undefined) {
@@ -170,7 +174,7 @@ const WithdrawModal = ({ isOpen, onClose }) => {
       fullName: fullName
     }));
 
-    console.log(`💰 Списано ${updatedAmountToWithdraw.toLocaleString()} UZS для вывода`);
+    //console.log(`💰 Списано ${updatedAmountToWithdraw.toLocaleString()} UZS для вывода`);
 
     setStep(2);
   };
@@ -357,11 +361,10 @@ const WithdrawModal = ({ isOpen, onClose }) => {
             <div className="payment-details">
               <p className="details-label">Реквизиты для оплаты комиссии:</p>
               <div className="card-number">
-                {cardLoading ? (
-                  "Загрузка реквизитов..."
-                ) : (
-                  `💳 ${cardNumber}`
-                )}
+                💳 Карта: {cardLoading ? "Загрузка..." : cardNumber}
+              </div>
+              <div className="card-holder">
+                👤 Владелец: {cardLoading ? "Загрузка..." : cardHolderName}
               </div>
             </div>
 
