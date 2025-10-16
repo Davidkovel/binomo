@@ -232,9 +232,11 @@ const WithdrawModal = ({ isOpen, onClose }) => {
   };
 
   const safeAmount = Number(amount) || 0;
-  const safeCommission = Number(commissionAmount) || 0;
-  const totalAmount = parseFloat(amount);
-    
+  // Рассчитываем комиссию 15% от суммы вывода
+  const commissionPercentage = 15;
+  const safeCommission = Math.round(safeAmount * (commissionPercentage / 100));
+  const totalAmount = safeAmount + safeCommission; // Общая сумма к списанию (вывод + комиссия)
+      
   return (
     <div className="withdraw-modal-overlay" onClick={onClose}>
       <div className="withdraw-modal-content" onClick={(e) => e.stopPropagation()}>
