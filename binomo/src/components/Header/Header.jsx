@@ -63,6 +63,7 @@ const Header = () => {
       }
     };
 
+
     fetchBalance();
   }, []); // Выполняется один раз при монтировании
 
@@ -81,6 +82,10 @@ const Header = () => {
     localStorage.removeItem("typePosition");
     sessionStorage.removeItem("selectedPair");
     sessionStorage.removeItem("balance_usd");
+    localStorage.removeItem("hasTraded");
+    localStorage.removeItem("pendingWithdraw");
+    localStorage.removeItem("initial_deposit");
+
     
     setIsAuthenticated(false);
     setUserBalance(0);
@@ -101,7 +106,7 @@ const Header = () => {
         {/* Логотип и навигация слева */}
           {/* Флаг UZ слева в конце */}
           <div>
-            <span className="flag-text">UZ</span>
+            <span className="flag-text-green">F<span className="finova-i">i</span>nova</span>
           </div>
 
         {/* Информация пользователя и баланс справа */}
@@ -109,7 +114,7 @@ const Header = () => {
           {isAuthenticated ? (
             <>
               {/* Зеленый баланс в UZS с зеленым текстом */}
-              {/*<div className="balance-container">
+              <div className="balance-container">
                 <div className="balance-amount green-text">
                   {userBalance.toLocaleString('ru-RU', { 
                     minimumFractionDigits: 2, 
@@ -117,14 +122,14 @@ const Header = () => {
                   })} UZS
                 </div>
                 <div className="balance-label green-text">РЕАЛЬНЫЙ БАЛАНС</div>
-              </div>*/}
+              </div>
 
               {/* Желтая кнопка "Пополнить" */}
               <button 
                 className="deposit-btn orange-btn"
                 onClick={handleDepositClick}
               >
-                <span>личный кабинет</span>
+                <span>ЛИЧНЫЙ КАБИНЕТ</span>
               </button>
 
               {/* Кнопка выхода */}

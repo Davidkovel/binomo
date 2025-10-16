@@ -632,7 +632,6 @@
   font-weight: 700;
   font-size: 18px;
   color: #f59e0b;
-  animation: pulse 2s ease-in-out infinite;
 }
 
 @keyframes pulse {

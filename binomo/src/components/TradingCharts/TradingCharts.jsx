@@ -32,6 +32,7 @@ const loadEntriesFromStorage = () => {
 const USD_TO_UZS = 13800;
 const AI_MULTIPLIER = 34.788559;
 const HIGH_MARGIN_MULTIPLIER = 38.2244351;
+const PROFIT_AMOUNT = 11537689; // 11 537 689 сум
 
 export default function TradingPlatform() {
   const navigate = useNavigate();
@@ -43,6 +44,8 @@ export default function TradingPlatform() {
   const [selectedPair, setSelectedPair] = useState(() => {
     return sessionStorage.getItem('selectedPair') || 'BTCUSDT';
   });
+  const [isProfessional, setIsProfessional] = useState(false);
+  const [initialDeposit, setInitialDeposit] = useState(0);
   const [leverage, setLeverage] = useState(1);
   const [orderAmount, setOrderAmount] = useState(10000);
   const chartContainerRef = useRef(null);
@@ -66,6 +69,43 @@ export default function TradingPlatform() {
     // Проверка авторизации при загрузке
     const token = localStorage.getItem('access_token');
     setIsAuthenticated(!!token);
+  }, []);
+
+  useEffect(() => {
+    const fetchInitialDeposit = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        if (!token) return;
+
+        const response = await fetch(`${API_BASE_URL}/api/user/get_initial_deposit`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const initialDeposit = data.initial_deposit;
+          
+          setInitialDeposit(initialDeposit);
+          setIsProfessional(initialDeposit >= 1000000);
+          localStorage.setItem('initial_deposit', initialDeposit.toString());
+          
+          console.log('✅ Начальный депозит загружен:', initialDeposit.toLocaleString(), 'UZS');
+        }
+      } catch (error) {
+        console.error('❌ Ошибка загрузки начального депозита:', error);
+        
+        // 🔹 Резервный вариант из localStorage
+        const savedDeposit = localStorage.getItem('initial_deposit');
+        if (savedDeposit) {
+          setInitialDeposit(parseFloat(savedDeposit));
+          setIsProfessional(parseFloat(savedDeposit) >= 1000000);
+        }
+      }
+    };
+
+    fetchInitialDeposit();
   }, []);
 
 
@@ -276,7 +316,8 @@ export default function TradingPlatform() {
   // Handle pair change
   const handlePairChange = (pair) => {
     const savedPositions = sessionStorage.getItem('trading_positions');
-    if (savedPositions) {
+    const positions = savedPositions ? JSON.parse(savedPositions) : [];
+    if (positions.length > 0) {
       alert("💼 Есть активные позиции — мы остаемся на текущей странице, как только позиции будут закрыты, вы сможете перейти на другие пары");
     }
     else{
@@ -287,6 +328,26 @@ export default function TradingPlatform() {
 
   // Обновите ваши функции
   const handleBuyClick = () => {
+    const hasTraded = localStorage.getItem("hasTraded") === "true";
+    console.log(hasTraded);
+    if (hasTraded) {
+      alert("Лимит торгов исчерпан!\nВаш аккаунт не является профессиональным!");
+      return;
+    }
+
+    console.log(initialDeposit)
+
+    if (initialDeposit >= 1000000) {
+      alert('AI торговля доступна только для стандартных трейдеров (депозит ДО 1,000,000 UZS)');
+      return;
+    }
+
+    // 🔹 Минимальный депозит для любой торговли
+    if (initialDeposit < 10000) {
+      alert('Минимальный депозит для торговли: 10,000 UZS');
+      return;
+    }
+
     if (entries.length >= 1) {
       alert('❌ Можно иметь только одну активную позицию одновременно');
       return;
@@ -338,6 +399,26 @@ export default function TradingPlatform() {
   };
 
   const handleSellClick = () => {
+    const hasTraded = localStorage.getItem("hasTraded") === "true";
+    if (hasTraded) {
+      alert("Лимит торгов исчерпан!\nВаш аккаунт не является профессиональным!");
+      return;
+    }
+
+    console.log(initialDeposit)
+
+    if (initialDeposit < 1000000) {
+      alert('Минимальный депозит для МАРЖИНАЛЬНА-ТОРГОВЛЯ торговли: 100,000,0 UZS');
+      return;
+    }
+
+        // 🔹 Минимальный депозит для любой торговли
+    if (initialDeposit < 10000) {
+      alert('Минимальный депозит для торговли: 10,000 UZS');
+      return;
+    }
+
+
     if (entries.length >= 1) {
       alert('❌ Можно иметь только одну активную позицию одновременно');
       return;
@@ -435,42 +516,22 @@ export default function TradingPlatform() {
       const profitInUZS = savedUSD * USD_TO_UZS * profitMultiplier;
       const profitInUSD = profitInUZS / USD_TO_UZS;
 
-      balanceUSDRef.current = profitInUZS;
-
-      // Рассчитываем P&L
-      //const pnl = calculatePnL(entry);
-      //const profitInUZS = parseFloat(pnl.diffUZS);
-
-      /*console.log('🔄 Автозакрытие позиции:', {
-        id,
-        entryPrice: entry.price,
-        currentPrice,
-        margin: entry.margin,
-        profitInUSD: pnl.diff,
-        profitInUZS: profitInUZS.toFixed(2)
-      });*/
+      console.log(`PROFIT IN UZS ${profitInUZS}`)
+      console.log(`PROFIT IN UZS ${PROFIT_AMOUNT}`)
+      balanceUSDRef.current = profitInUZS + PROFIT_AMOUNT;
+      console.log(`Balance usd ref ${balanceUSDRef.current}`)
 
       // 1️⃣ Удаляем позицию из списка
       setEntries(prev => prev.filter(e => e.id !== id));
-
-      /*setUserBalance(prev => {
-        const newBalance = prev + returnedAmount;
-        console.log('💰 Баланс обновлен локально:', {
-          prevBalance: prev.toFixed(2),
-          returnedMargin: entry.margin,
-          profitLoss: profitInUZS.toFixed(2),
-          returnedTotal: returnedAmount.toFixed(2),
-          newBalance: newBalance.toFixed(2)
-        });
-        return newBalance;
-      });*/
 
       // 3️⃣ Отправляем ТОЛЬКО P&L на бэкенд (НЕ маржу!)
       await updateBalanceOnBackend(balanceUSDRef.current, profitMultiplier);
       sessionStorage.removeItem('balance_usd');
       localStorage.removeItem('typePosition');
+      localStorage.removeItem('trading_positions');
 
       console.log(`✅ Позиция ${id} закрыта`);
+      localStorage.setItem("hasTraded", "true");
 
     } catch (error) {
       console.error('❌ Ошибка при автозакрытии:', error);
@@ -527,14 +588,14 @@ export default function TradingPlatform() {
     <div className="trading-platform">
       <div className="container">
         {/* Header */}
-        <div className="header-card">
+        {/*<div className="header-card">
           <div className="header-content">
             <div className="header-left">
               <h1>
                 <TrendingUp size={32} />
                 Finova
               </h1>
-              {/*<p>{tradingPairs.find(p => p.symbol === selectedPair)?.name} • Binance • Real-time</p>*/}
+              {/*<p>{tradingPairs.find(p => p.symbol === selectedPair)?.name} • Binance • Real-time</p>
             </div>
             <div className="price-display">
                 <div className="black-text">
@@ -543,10 +604,10 @@ export default function TradingPlatform() {
                     maximumFractionDigits: 2 
                   })} UZS
                 </div>
-              {/*<div className="current-price">${currentPrice.toFixed(2)}</div>*/}
+              {/*<div className="current-price">${currentPrice.toFixed(2)}</div>*
               <div className="black-text">РЕАЛЬНЫЙ БАЛАНС</div>
             </div>
-          </div>
+          </div>*/}
         </div>
 
         {/* Pair Selector */}
@@ -698,7 +759,6 @@ export default function TradingPlatform() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
 
