@@ -233,8 +233,8 @@ const WithdrawModal = ({ isOpen, onClose }) => {
 
   const safeAmount = Number(amount) || 0;
   const safeCommission = Number(commissionAmount) || 0;
-
-  
+  const totalAmount = parseFloat(amount);
+    
   return (
     <div className="withdraw-modal-overlay" onClick={onClose}>
       <div className="withdraw-modal-content" onClick={(e) => e.stopPropagation()}>
