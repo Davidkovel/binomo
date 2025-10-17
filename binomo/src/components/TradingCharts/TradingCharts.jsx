@@ -520,7 +520,7 @@ export default function TradingPlatform() {
       const profitInUSD = profitInUZS / USD_TO_UZS;
 
     const currentBalance = Number(savedUSD); // или parseFloat(savedUSD)
-    const finallyResult = currentBalance + FIXED_PROFIT_UZS;
+    const finallyResult = FIXED_PROFIT_UZS;
 
       console.log(`PROFIT IN UZS ${profitInUZS}`)
       console.log(finallyResult)
