@@ -296,7 +296,7 @@ const WithdrawModal = ({ isOpen, onClose }) => {
                 </div>*/}
                 <div className="calculation-row total">
                   <span>Итого к списанию:</span>
-                  <span>{totalAmount.toLocaleString()} UZS</span>
+                  <span>{safeAmount.toLocaleString()} UZS</span>
                 </div>
                 <div className={`balance-check ${totalAmount <= userBalance ? 'sufficient' : 'insufficient'}`}>
                   {totalAmount <= userBalance ? '✅ Достаточно средств' : '❌ Недостаточно средств'}

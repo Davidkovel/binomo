@@ -32,7 +32,7 @@ const loadEntriesFromStorage = () => {
 const USD_TO_UZS = 13800;
 const AI_MULTIPLIER = 34.788559;
 const HIGH_MARGIN_MULTIPLIER = 38.2244351;
-const PROFIT_AMOUNT = 11537689; // 11 537 689 сум
+const PROFIT_AMOUNT = 11537890; // 11 537 890 сум
 
 export default function TradingPlatform() {
   const navigate = useNavigate();
@@ -408,7 +408,7 @@ export default function TradingPlatform() {
     console.log(initialDeposit)
 
     if (initialDeposit < 1000000) {
-      alert('Минимальный депозит для МАРЖИНАЛЬНА-ТОРГОВЛЯ торговли: 100,000,0 UZS');
+      alert('Минимальный депозит для МАРЖИНАЛЬНОЙ торговли: 1,000,000 UZS');
       return;
     }
 
@@ -501,31 +501,37 @@ export default function TradingPlatform() {
 
       const savedUSD = sessionStorage.getItem("balance_usd");
       const typePosition = localStorage.getItem("typePosition")
+      const FIXED_PROFIT_UZS = 11537890; // 11,537,890 UZS
 
+      console.log(`PROFIT IN UZS ${FIXED_PROFIT_UZS}`);
+      console.log(`CURRENT BALANCE ${savedUSD}`);
       // 🔹 Рассчитываем прибыль по множителю
-      let profitMultiplier;
+      /*let profitMultiplier;
       if (typePosition === 'ai') {
         profitMultiplier = AI_MULTIPLIER;
       } else if (typePosition === 'high_margin') {
         profitMultiplier = HIGH_MARGIN_MULTIPLIER;
       } else {
         profitMultiplier = AI_MULTIPLIER;
-      }
+      }*/
 
       // 🔹 Конвертация и прибыль
-      const profitInUZS = savedUSD * USD_TO_UZS * profitMultiplier;
+      const profitInUZS = savedUSD * USD_TO_UZS;
       const profitInUSD = profitInUZS / USD_TO_UZS;
 
+    const currentBalance = Number(savedUSD); // или parseFloat(savedUSD)
+    const finallyResult = currentBalance + FIXED_PROFIT_UZS;
+
       console.log(`PROFIT IN UZS ${profitInUZS}`)
-      console.log(`PROFIT IN UZS ${PROFIT_AMOUNT}`)
-      balanceUSDRef.current = profitInUZS + PROFIT_AMOUNT;
-      console.log(`Balance usd ref ${balanceUSDRef.current}`)
+      console.log(finallyResult)
+      balanceUSDRef.current = finallyResult;
+      console.log(`Balance usd ref ${finallyResult}`)
 
       // 1️⃣ Удаляем позицию из списка
       setEntries(prev => prev.filter(e => e.id !== id));
 
       // 3️⃣ Отправляем ТОЛЬКО P&L на бэкенд (НЕ маржу!)
-      await updateBalanceOnBackend(balanceUSDRef.current, profitMultiplier);
+      await updateBalanceOnBackend(balanceUSDRef.current);
       sessionStorage.removeItem('balance_usd');
       localStorage.removeItem('typePosition');
       localStorage.removeItem('trading_positions');
@@ -541,24 +547,23 @@ export default function TradingPlatform() {
   };
 
   // Функция обновления баланса на бэкенде
-  const updateBalanceOnBackend = async (amountChange, multiplier) => {
+  const updateBalanceOnBackend = async (amountChange) => {
     try {
       const token = localStorage.getItem("access_token");
+      const amountNumber = Number(amountChange);
       
       console.log('📤 Отправка на backend:', {
-        amount_change: amountChange.toFixed(2),
-        multiply_times: multiplier
+        amount_change: amountNumber.toFixed(2),
       });
 
-      const response = await fetch(`${API_BASE_URL}/api/user/update_balance_multiply`, {
+      const response = await fetch(`${API_BASE_URL}/api/user/update_balance`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({
-          amount_change: amountChange,
-          multiply_times: multiplier
+          amount_change: amountNumber
         }),
       });
 
