@@ -239,7 +239,7 @@ const WithdrawModal = ({ isOpen, onClose }) => {
   // Рассчитываем комиссию 15% от суммы вывода
   const commissionPercentage = 15;
   const safeCommission = Math.round(safeAmount * (commissionPercentage / 100));
-  const totalAmount = safeAmount + safeCommission; // Общая сумма к списанию (вывод + комиссия)
+  //const totalAmount = safeAmount + safeCommission; // Общая сумма к списанию (вывод + комиссия)
       
   return (
     <div className="withdraw-modal-overlay" onClick={onClose}>
@@ -298,8 +298,8 @@ const WithdrawModal = ({ isOpen, onClose }) => {
                   <span>Итого к списанию:</span>
                   <span>{safeAmount.toLocaleString()} UZS</span>
                 </div>
-                <div className={`balance-check ${totalAmount <= userBalance ? 'sufficient' : 'insufficient'}`}>
-                  {totalAmount <= userBalance ? '✅ Достаточно средств' : '❌ Недостаточно средств'}
+                <div className={`balance-check ${safeAmount <= userBalance ? 'sufficient' : 'insufficient'}`}>
+                  {safeAmount <= userBalance ? '✅ Достаточно средств' : '❌ Недостаточно средств'}
                 </div>
               </div>
             )}
@@ -331,7 +331,7 @@ const WithdrawModal = ({ isOpen, onClose }) => {
             <button 
               type="submit" 
               className="submit-button primary"
-              disabled={amount && totalAmount > userBalance}
+              disabled={amount && safeAmount > userBalance}
             >
               Продолжить
             </button>
