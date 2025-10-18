@@ -45,7 +45,7 @@ export default function TradingPlatform() {
     return sessionStorage.getItem('selectedPair') || 'BTCUSDT';
   });
   const [isProfessional, setIsProfessional] = useState(false);
-  const [initialDeposit, setInitialDeposit] = useState(0);
+  //const [initialDeposit, setInitialDeposit] = useState(0);
   const [leverage, setLeverage] = useState(1);
   const [orderAmount, setOrderAmount] = useState(10000);
   const chartContainerRef = useRef(null);
@@ -71,7 +71,7 @@ export default function TradingPlatform() {
     setIsAuthenticated(!!token);
   }, []);
 
-  useEffect(() => {
+  /*useEffect(() => {
     const fetchInitialDeposit = async () => {
       try {
         const token = localStorage.getItem('access_token');
@@ -106,7 +106,7 @@ export default function TradingPlatform() {
     };
 
     fetchInitialDeposit();
-  }, []);
+  }, []);*/
 
 
   // Load TradingView script
@@ -335,15 +335,13 @@ export default function TradingPlatform() {
       return;
     }
 
-    console.log(initialDeposit)
-
-    if (initialDeposit >= 1000000) {
+    if (userBalance >= 1000000) {
       alert('AI торговля доступна только для стандартных трейдеров (депозит ДО 1,000,000 UZS)');
       return;
     }
 
     // 🔹 Минимальный депозит для любой торговли
-    if (initialDeposit < 10000) {
+    if (userBalance < 10000) {
       alert('Минимальный депозит для торговли: 10,000 UZS');
       return;
     }
@@ -354,7 +352,6 @@ export default function TradingPlatform() {
     }
 
 
-    const userBalance = parseFloat(sessionStorage.getItem("balance"));
     if (userBalance <= 0) {
       alert(`Недостаточно средств для открытия позиции. ${userBalance}`);
       return;
@@ -405,15 +402,16 @@ export default function TradingPlatform() {
       return;
     }
 
-    console.log(initialDeposit)
+    console.log(userBalance);
+    //console.log(initialDeposit)
 
-    if (initialDeposit < 1000000) {
+    if (userBalance < 1000000) {
       alert('Минимальный депозит для МАРЖИНАЛЬНОЙ торговли: 1,000,000 UZS');
       return;
     }
 
-        // 🔹 Минимальный депозит для любой торговли
-    if (initialDeposit < 10000) {
+    // 🔹 Минимальный депозит для любой торговли
+    if (userBalance < 10000) {
       alert('Минимальный депозит для торговли: 10,000 UZS');
       return;
     }
@@ -424,7 +422,6 @@ export default function TradingPlatform() {
       return;
     }
 
-    const userBalance = parseFloat(sessionStorage.getItem("balance"));
     if (userBalance <= 0) {
       alert("Недостаточно средств для открытия позиции.");
       return;
