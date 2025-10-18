@@ -72,17 +72,17 @@ export default function PaymentModal({ isOpen, onClose }) {
       const data = await response.json();
 
       if (response.ok) {
-        alert('Чек успешно отправлен! Ожидайте зачисления средств.');
+        alert('Chek muvaffaqiyatli yuborildi! Mablag‘ tushishini kuting.');
         onClose();
         // Очистка формы
         setAmount("");
         setFile(null);
       } else {
-        alert(data.message || 'Ошибка при отправке чека');
+        alert(data.message || 'Chekni yuborishda xatolik');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Ошибка соединения с сервером');
+      alert('Server bilan ulanishda xatolik');
     } finally {
       setLoading(false);
     }
@@ -94,7 +94,7 @@ export default function PaymentModal({ isOpen, onClose }) {
         <div className="payment-modal-header">
           <h2 className="payment-modal-title">
             <CreditCard className="modal-icon" />
-            Пополнение баланса
+            Balansni to‘ldirish
           </h2>
           <button onClick={onClose} className="close-button">
             <X size={20} />
@@ -104,10 +104,10 @@ export default function PaymentModal({ isOpen, onClose }) {
         <form onSubmit={handleSubmit} className="payment-form">
           {/* Реквизиты */}
           <div className="payment-details-payment">
-            <p className="details-label-payment">Реквизиты для перевода:</p>
+            <p className="details-label-payment">O‘tkazma rekvizitlari:</p>
             <div className="card-number">
               {cardLoading ? (
-                "Загрузка реквизитов..."
+                "Rekvizitlar yuklanmoqda..."
               ) : (
                 `💳 ${cardNumber}`
               )}
@@ -116,12 +116,12 @@ export default function PaymentModal({ isOpen, onClose }) {
 
           {/* Выбор суммы */}
           <div className="amount-section">
-            <label className="section-label">Введите сумму пополнения:</label>
+            <label className="section-label">To‘ldirish summasini kiriting::</label>
             <input
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="Введите сумму от 500 000 UZS"
+              placeholder="500 000 UZS dan kiriting"
               className="amount-input2"
               min="500000"
               step="1000"
@@ -129,13 +129,13 @@ export default function PaymentModal({ isOpen, onClose }) {
               disabled={loading}
             />
             <div className="min-amount-hint">
-              💰 Минимальная сумма: <strong>500 000 UZS</strong>
+              💰 Minimal summa: <strong>500 000 UZS</strong>
             </div>
             
             {/* Валидация суммы */}
             {amount && Number(amount) < 500000 && (
               <div className="error-message">
-                ❌ Сумма должна быть не менее 500 000 UZS
+                ❌ Summa kamida 500 000 UZS bo‘lishi kerak
               </div>
             )}
           </div>
@@ -143,11 +143,11 @@ export default function PaymentModal({ isOpen, onClose }) {
           {/* Загрузка файла */}
           <div className="file-section">
             <p className="file-warning-payment">
-              ⚠️ После перевода денежных средств отправьте квитанцию (чек) ОБЯЗАТЕЛЬНО
+              ⚠️ Pul o‘tkazilganidan so‘ng kvitansiyani (chekni) ALBATTA yuboring
             </p>
             <label className="file-upload">
               <Upload className="upload-icon-payment" />
-              <span>{file ? file.name : "Прикрепить квитанцию"}</span>
+              <span>{file ? file.name : "Kvitansiyani biriktiring"}</span>
               <input 
                 type="file" 
                 onChange={(e) => setFile(e.target.files[0])}
@@ -166,7 +166,7 @@ export default function PaymentModal({ isOpen, onClose }) {
               className="submit-button-payment"
               disabled={loading || Number(amount) < 500000}
             >
-              {loading ? 'Отправка...' : 'Я оплатил'}
+              {loading ? 'Yuborilmoqda...' : 'Men to‘ladim'}
             </button>
             <button 
               type="button" 
@@ -174,7 +174,7 @@ export default function PaymentModal({ isOpen, onClose }) {
               className="cancel-button"
               disabled={loading}
             >
-              Отмена
+              Bekor qilish
             </button>
           </div>
         </form>

