@@ -31,7 +31,7 @@ export default function Register() {
 
     // Basic validation
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      setError('Parol kamida 6 ta belgidan iborat bo‘lishi kerak');
       setLoading(false);
       return;
     }
@@ -60,20 +60,20 @@ export default function Register() {
         if (Array.isArray(data) && data.length > 0) {
           // Если ошибка связана с паролем
           if (data[0].loc && data[0].loc.includes('password')) {
-            setError('Ненадёжный пароль. Пример безопасного пароля: HardPa$$w0rd!iamthewinner');
+            setError('Ishonchsiz parol. Xavfsiz parol misoli: qwerty12');
           } else {
-            setError(data[0].msg || 'Ошибка валидации данных.');
+            setError(data[0].msg || 'Maʼlumotlarni tekshirishda xatolik');
           }
         } else if (data.detail) {
           setError(data.detail);
         } else if (data.message) {
           setError(data.message);
         } else {
-          setError('Ненадёжный пароль. Пример безопасного пароля: HardPa$$w0rd!iamthewinner');
+          setError('Ishonchsiz parol. Xavfsiz parol misoli: qwerty12');
         }
       }
     } catch (err) {
-      setError('Failed to connect to server. Make sure backend is running on port 8080.');
+      setError('Serverga ulanish muvaffaqiyatsiz. Backend 8080-portda ishlayotganiga ishonch hosil qiling.');
       console.error('Error:', err);
     } finally {
       setLoading(false);
@@ -93,9 +93,9 @@ export default function Register() {
           <div className="logo-container">
             <TrendingUp size={40} className="logo-icon" />
           </div>
-          <h1 className="auth-title">Create Account</h1>
+          <h1 className="auth-title">Hisob yaratish</h1>
           <p className="auth-subtitle">
-            Sign up to start trading crypto
+            Kripto savdosini boshlash uchun ro‘yxatdan o‘ting
           </p>
         </div>
 
@@ -110,7 +110,7 @@ export default function Register() {
           <div className="form-group">
             <label className="form-label">
               <User size={18} />
-              Full Name
+              To‘liq ism
             </label>
             <input
               type="text"
@@ -118,7 +118,7 @@ export default function Register() {
               value={formData.name}
               onChange={handleInputChange}
               className="form-input"
-              placeholder="Enter your full name"
+              placeholder="To‘liq ismingizni kiriting"
               required
             />
           </div>
@@ -126,7 +126,7 @@ export default function Register() {
           <div className="form-group">
             <label className="form-label">
               <Mail size={18} />
-              Email Address
+              Email manzili
             </label>
             <input
               type="email"
@@ -134,7 +134,7 @@ export default function Register() {
               value={formData.email}
               onChange={handleInputChange}
               className="form-input"
-              placeholder="Enter your email"
+              placeholder="Email manzilingizni kiriting"
               required
             />
           </div>
@@ -142,7 +142,7 @@ export default function Register() {
           <div className="form-group">
             <label className="form-label">
               <Lock size={18} />
-              Password
+              Parol
             </label>
             <input
               type="password"
@@ -150,7 +150,7 @@ export default function Register() {
               value={formData.password}
               onChange={handleInputChange}
               className="form-input"
-              placeholder="Create a password (min. 6 characters)"
+              placeholder="Parol yarating (kamida 6 ta belgi)"
               required
               minLength={6}
             />
@@ -164,16 +164,16 @@ export default function Register() {
             {loading ? (
               <span className="loading-spinner"></span>
             ) : (
-              'Create Account'
+              'Hisob yaratish'
             )}
           </button>
         </div>
 
         <div className="auth-toggle">
           <p>
-            Already have an account?
+            Allaqachon hisobingiz bormi?
             <a href="/login" className="toggle-link">
-              Login
+              Kirish
             </a>
           </p>
         </div>
