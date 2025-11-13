@@ -47,7 +47,7 @@ const Header = () => {
         });
 
         if (!response.ok) {
-          throw new Error("Ошибка при получении баланса");
+          throw new Error("Error receiving the balance");
         }
 
         const data = await response.json();
@@ -59,7 +59,7 @@ const Header = () => {
         setUserBalance(balance);
         
       } catch (err) {
-        console.error('❌ Ошибка загрузки баланса:', err);
+        console.error('❌ Error while was loading balance', err);
       }
     };
 
@@ -119,9 +119,9 @@ const Header = () => {
                   {userBalance.toLocaleString('ru-RU', { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
-                  })} UZS
+                  })} USD
                 </div>
-                <div className="balance-label green-text">HAQIQLI BALANS</div>
+                <div className="balance-label green-text">BALANCE REAL</div>
               </div>
 
               {/* Желтая кнопка "Пополнить" */}
@@ -129,23 +129,23 @@ const Header = () => {
                 className="deposit-btn orange-btn"
                 onClick={handleDepositClick}
               >
-                <span>SHAXSIY KABINET</span>
+                <span>CUENTA PERSONAL</span>
               </button>
 
               {/* Кнопка выхода */}
               <button className="logout-btn" onClick={handleLogout}>
                 <LogOut size={20} />
-                <span>Chiqish</span>
+                <span>Cerrar sesión</span>
               </button>
             </>
           ) : (
             <>
               {/* Кнопка входа для неавторизованных */}
               <button className="login-btn" onClick={handleLogin}>
-                Kirish
+                Iniciar sesión
               </button>
               <button className="register-btn" onClick={() => navigate('/register')}>
-                Ro‘yxatdan o‘tish
+                Registrarse
               </button>
             </>
           )}

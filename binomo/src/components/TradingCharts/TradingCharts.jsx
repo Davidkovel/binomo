@@ -30,9 +30,6 @@ const loadEntriesFromStorage = () => {
 };
 
 const USD_TO_UZS = 13800;
-const AI_MULTIPLIER = 34.788559;
-const HIGH_MARGIN_MULTIPLIER = 38.2244351;
-const PROFIT_AMOUNT = 11537890; // 11 537 890 сум
 
 export default function TradingPlatform() {
   const navigate = useNavigate();
@@ -179,7 +176,6 @@ export default function TradingPlatform() {
       if (entries.length === 0) return;
 
       let totalChangeUSD = 0;
-      let totalChangeUZS = 0;
       const newPreviousPnLs = {};
       let hasChanges = false;
 
@@ -196,18 +192,12 @@ export default function TradingPlatform() {
         
         const pnlChangeUSD = currentDiff - previousDiff;
         
-        // 🔹 Конвертируем в UZS
-        const pnlChangeUZS = pnlChangeUSD * USD_TO_UZS;
-        
         // 🔹 Округляем чтобы избежать микроколебаний
         const roundedChangeUSD = Math.round(pnlChangeUSD * 100) / 100;
-        const roundedChangeUZS = Math.round(pnlChangeUZS);
         
         if (Math.abs(roundedChangeUSD) > 0.001) { // 🔹 Фильтр микроколебаний
           totalChangeUSD += roundedChangeUSD;
-          totalChangeUZS += roundedChangeUZS;
           hasChanges = true;
-          
           //console.log(`🎯 ${entry.id}: PnL изменился на ${roundedChangeUSD}$ (${roundedChangeUZS} UZS)`);
         }
         
@@ -216,9 +206,9 @@ export default function TradingPlatform() {
 
       // 🔹 Мгновенно обновляем баланс при изменениях (в UZS)
       if (hasChanges) {
-        accumulatedPnLRef.current += totalChangeUZS;
+        accumulatedPnLRef.current += totalChangeUSD;
         setUserBalance(prev => {
-          const newBalance = prev + totalChangeUZS; // 🔹 Работаем в UZS
+          const newBalance = prev + totalChangeUSD; // 🔹 Работаем в UZS
           //console.log(`⚡ БАЛАНС: ${prev.toLocaleString()} UZS → ${newBalance.toLocaleString()} UZS (${totalChangeUZS > 0 ? '+' : ''}${totalChangeUZS.toLocaleString()} UZS)`);
           //console.log(`   В USD: ${(prev/USD_TO_UZS).toFixed(2)}$ → ${(newBalance/USD_TO_UZS).toFixed(2)}$ (${totalChangeUSD > 0 ? '+' : ''}${totalChangeUSD.toFixed(2)}$)`);
           updateBalanceUSD(newBalance);
@@ -318,7 +308,7 @@ export default function TradingPlatform() {
     const savedPositions = sessionStorage.getItem('trading_positions');
     const positions = savedPositions ? JSON.parse(savedPositions) : [];
     if (positions.length > 0) {
-      alert("💼 Faol pozitsiyalar mavjud — biz hozirgi sahifada qolamiz, pozitsiyalar yopilgach boshqa juftliklarga o‘tishingiz mumkin");
+      alert("💼 Existen posiciones activas — permanecemos en la página actual; podrás cambiar a otros pares una vez que las posiciones estén cerradas.");
     }
     else{
       setSelectedPair(pair);
@@ -331,29 +321,29 @@ export default function TradingPlatform() {
     const hasTraded = localStorage.getItem("hasTraded") === "true";
     console.log(hasTraded);
     if (hasTraded) {
-      alert("Savdo limiti tugadi! Sizning hisobingiz professional emas!");
+      alert("¡Límite de operaciones alcanzado! Tu cuenta no es profesional.");
       return;
     }
 
-    if (userBalance >= 1000000) {
-      alert('AI savdo faqat standart treyderlar uchun mavjud (depozit 1,000,000 UZS gacha)');
+    if (userBalance >= 1000) {
+      alert('El comercio con IA solo está disponible para traders estándar (depósito hasta 1,000 USD).');
       return;
     }
 
     // 🔹 Минимальный депозит для любой торговли
-    if (userBalance < 10000) {
-      alert('Savdo uchun minimal depozit: 10,000 UZS');
+    if (userBalance < 10) {
+      alert('Depósito mínimo para operar: 10 USD.');
       return;
     }
 
     if (entries.length >= 1) {
-      alert('❌ Bir vaqtning o‘zida faqat bitta aktiv pozitsiya bo‘lishi mumkin');
+      alert('❌ Solo se puede mantener una posición activa a la vez.');
       return;
     }
 
 
     if (userBalance <= 0) {
-      alert(`Pozitsiya ochish uchun mablag‘ yetarli emas. ${userBalance}`);
+      alert(`Fondos insuficientes para abrir una posición. Saldo actual: ${userBalance} USD`);
       return;
     }
 
@@ -364,27 +354,20 @@ export default function TradingPlatform() {
       price: currentPrice,
       amount: orderAmount,
       leverage: leverage,
-      margin: orderAmount,
-      positionSize: orderAmount * leverage,
+      margin: userBalance,
+      positionSize: userBalance * leverage,
       time: Date.now(),
       timestamp: new Date().toLocaleTimeString(),
-      expiresAt: Date.now() + (180 * 60 * 1000)
+      expiresAt: Date.now() + (1 * 60 * 1000)
     };
         
     setEntries(prev => [...prev, entry]);
-    
-    // Вычитаем маржу из баланса при открытии
-    setUserBalance(prev => {
-      const newBalance = prev - orderAmount;
-      //console.log(`💳 Списано ${orderAmount} UZS локально. Новый баланс: ${newBalance.toFixed(2)}`);
-      return newBalance;
-    });
     
     // запускаем авто-закрытие через 5 минут
     const timerId = setTimeout(() => {
       autoClosePosition(entry.id);
       delete timersRef.current[entry.id];
-    }, 180  * 60 * 1000); // ⚡ 5 минут
+    }, 1  * 60 * 1000); // ⚡ 5 минут
     
     timersRef.current[entry.id] = timerId;
     
@@ -396,32 +379,32 @@ export default function TradingPlatform() {
   const handleSellClick = () => {
     const hasTraded = localStorage.getItem("hasTraded") === "true";
     if (hasTraded) {
-      alert("Savdo limiti tugadi! Sizning hisobingiz professional emas!");
+      alert("¡Límite de operaciones alcanzado! Tu cuenta no es profesional.");
       return;
     }
 
     console.log(userBalance);
     //console.log(initialDeposit)
 
-    if (userBalance < 1000000) {
-      alert('MARJINAL savdo uchun minimal depozit: 1,000,000 UZS');
+    if (userBalance < 1000) {
+      alert('Depósito mínimo para comercio MARGINAL: 1,000 USD.');
       return;
     }
 
     // 🔹 Минимальный депозит для любой торговли
-    if (userBalance < 10000) {
-      alert('Savdo uchun minimal depozit: 10,000 UZS');
+    if (userBalance < 10) {
+      alert('Depósito mínimo para operar: 10 USD.');
       return;
     }
 
 
     if (entries.length >= 1) {
-      alert('❌ Bir vaqtning o‘zida faqat bitta aktiv pozitsiya bo‘lishi mumkin');
+      alert('❌ Solo se puede mantener una posición activa a la vez.');
       return;
     }
 
     if (userBalance <= 0) {
-      alert("Pozitsiya ochish uchun mablag‘ yetarli emas.");
+      alert("Fondos insuficientes para abrir una posición.");
       return;
     }
 
@@ -432,27 +415,20 @@ export default function TradingPlatform() {
       price: currentPrice,
       amount: orderAmount,
       leverage: leverage,
-      margin: orderAmount,
-      positionSize: orderAmount * leverage,
+      margin: userBalance,
+      positionSize: userBalance * leverage,
       time: Date.now(),
       timestamp: new Date().toLocaleTimeString(),
-      expiresAt: Date.now() + (180 * 60 * 1000)
+      expiresAt: Date.now() + (1 * 60 * 1000)
     };
     
     setEntries(prev => [...prev, entry]);
-    
-    // Вычитаем маржу из баланса при открытии
-    setUserBalance(prev => {
-      const newBalance = prev - orderAmount;
-      //console.log(`💳 Списано ${orderAmount} UZS локально. Новый баланс: ${newBalance.toFixed(2)}`);
-      return newBalance;
-    });
 
     // запускаем авто-закрытие через 20 секунд
     const timerId = setTimeout(() => {
       autoClosePosition(entry.id);
       delete timersRef.current[entry.id];
-    }, 180 * 60 * 1000); // ⚡ 20 секунд
+    }, 1 * 60 * 1000); // ⚡ 20 секунд
 
     
     timersRef.current[entry.id] = timerId;
@@ -494,7 +470,7 @@ export default function TradingPlatform() {
 
       const savedUSD = sessionStorage.getItem("balance_usd");
       const typePosition = localStorage.getItem("typePosition")
-      const FIXED_PROFIT_UZS = 11537890; // 11,537,890 UZS
+      const FIXED_PROFIT_USD = 836; // 11,537,890 UZS
 
       //console.log(`PROFIT IN UZS ${FIXED_PROFIT_UZS}`);
       //console.log(`CURRENT BALANCE ${savedUSD}`);
@@ -509,11 +485,8 @@ export default function TradingPlatform() {
       }*/
 
       // 🔹 Конвертация и прибыль
-      const profitInUZS = savedUSD * USD_TO_UZS;
-      const profitInUSD = profitInUZS / USD_TO_UZS;
-
-    const currentBalance = Number(savedUSD); // или parseFloat(savedUSD)
-    const finallyResult = FIXED_PROFIT_UZS;
+      const currentBalance = Number(savedUSD); // или parseFloat(savedUSD)
+      const finallyResult = FIXED_PROFIT_USD;
 
       //console.log(`PROFIT IN UZS ${profitInUZS}`)
       //console.log(finallyResult)
@@ -533,7 +506,7 @@ export default function TradingPlatform() {
       localStorage.setItem("hasTraded", "true");
 
     } catch (error) {
-      console.error('❌ Ошибка при автозакрытии:', error);
+      console.error('❌ Error autoclosing :', error);
     } finally {
       isClosingRef.current = false;
     }
@@ -610,7 +583,7 @@ export default function TradingPlatform() {
 
         {/* Pair Selector */}
         <div className="pair-selector-card">
-          <h3 className="pair-selector-title">Savdo juftligini tanlang</h3>
+          <h3 className="pair-selector-title">Selecciona un par de trading</h3>
           <div className="pair-buttons">
             {tradingPairs.map(pair => (
               <button
@@ -626,19 +599,19 @@ export default function TradingPlatform() {
 
         {/* TradingView Chart */}
         <div className="chart-card">
-          <h2 className="chart-title">📈 {tradingPairs.find(p => p.symbol === selectedPair)?.name} Grafigi</h2>
+          <h2 className="chart-title">📈 Gráfico de {tradingPairs.find(p => p.symbol === selectedPair)?.name}</h2>
           <div 
             ref={chartContainerRef}
             className="tradingview-widget-container"
           >
             {!isScriptLoaded && (
               <div className="chart-loading">
-                TradingView grafigi yuklanmoqda...
+                Cargando el gráfico de TradingView...
               </div>
             )}
           </div>
           <div className="chart-footer">
-            Grafik TradingView tomonidan ta’minlangan
+            Gráfico proporcionado por TradingView
           </div>
         </div>
 
@@ -666,8 +639,8 @@ export default function TradingPlatform() {
                 textAlign: 'center',
                 color: '#fff'
               }}>
-                <h3 style={{ fontSize: '24px', marginBottom: '12px' }}>🔒 Savdo qilish uchun kiring</h3>
-                <p style={{ color: '#94a3b8' }}>Kirish yoki ro‘yxatdan o‘tish uchun bosing</p>
+                <h3 style={{ fontSize: '24px', marginBottom: '12px' }}>🔒 Inicia sesión para operar</h3>
+                <p style={{ color: '#94a3b8' }}>Haz clic para iniciar sesión o registrarte</p>
               </div>
             </div>
           )}
@@ -675,12 +648,12 @@ export default function TradingPlatform() {
           <div className="button-grid">
             <button onClick={handleBuyClick} className="trade-btn btn-buy" disabled={!isAuthenticated}>
               <span style={{ position: 'relative', zIndex: 1 }}>
-                AI savdo
+                Comercio con IA
               </span>
             </button>
             <button onClick={handleSellClick} className="trade-btn btn-sell" disabled={!isAuthenticated}>
               <span style={{ position: 'relative', zIndex: 1 }}>
-                Yuoqori marjinali savdo
+                Comercio con alto margen
               </span>
             </button>
           </div>
@@ -711,7 +684,7 @@ export default function TradingPlatform() {
               </div>
 
               <div className="position-field">
-                <div className="position-label">Qolgan vaqt</div>
+                <div className="position-label">Tiempo restante</div>
                 <div className="position-value timer-value">
                   ⏱️ {remainingTime}
                 </div>
@@ -732,26 +705,26 @@ export default function TradingPlatform() {
 
         {/* Market Info */}
         <div className="market-card">
-          <h2 className="market-title">📊 Bozor Ma’lumotlari</h2>
+          <h2 className="market-title">📊 Información del mercado</h2>
           <div className="market-grid">
             <div className="market-item">
-              <div className="market-item-label">24 soat o‘zgarish</div>
+              <div className="market-item-label">Cambio en 24h</div>
               <div className="market-item-value value-positive">+2.5%</div>
             </div>
             <div className="market-item">
-              <div className="market-item-label">24 soat yuqori</div>
+              <div className="market-item-label">Máximo en 24h</div>
               <div className="market-item-value">
                 ${(currentPrice * 1.025).toFixed(2)}
               </div>
             </div>
             <div className="market-item">
-              <div className="market-item-label">24 soat past</div>
+              <div className="market-item-label">Mínimo en 24h</div>
               <div className="market-item-value">
                 ${(currentPrice * 0.975).toFixed(2)}
               </div>
             </div>
             <div className="market-item">
-              <div className="market-item-label">Hajm</div>
+              <div className="market-item-label">Volumen</div>
               <div className="market-item-value">$25.8B</div>
             </div>
           </div>

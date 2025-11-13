@@ -48,10 +48,10 @@ export default function Login() {
         // Redirect to trading platform
         navigate('/trading');
       } else {
-        setError(data.message || 'Kirish amalga oshmadi. Iltimos, kiritilgan maʼlumotlarni tekshiring.');
+        setError(data.message || 'No se pudo iniciar sesión. Por favor, verifica los datos ingresados.');
       }
     } catch (err) {
-      setError('Server bilan ulana olmadi. Backend 8080-portda ishlayotganiga ishonch hosil qiling.');
+      setError('No se pudo conectar con el servidor. Asegúrate de que el backend esté funcionando en el puerto 8080.');
       console.error('Error:', err);
     } finally {
       setLoading(false);
@@ -71,9 +71,9 @@ export default function Login() {
           <div className="logo-container">
             <TrendingUp size={40} className="logo-icon" />
           </div>
-          <h1 className="auth-title">Qaytganingiz bilan tabriklaymiz</h1>
+          <h1 className="auth-title">Bienvenido de nuevo</h1>
           <p className="auth-subtitle">
-            Savdo hisobingizga kirish uchun tizimga kiring
+            Inicia sesión para acceder a tu cuenta de trading
           </p>
         </div>
 
@@ -88,7 +88,7 @@ export default function Login() {
           <div className="form-group">
             <label className="form-label">
               <Mail size={18} />
-              Email manzil
+              Dirección de correo electrónico
             </label>
             <input
               type="email"
@@ -96,7 +96,7 @@ export default function Login() {
               value={formData.email}
               onChange={handleInputChange}
               className="form-input"
-              placeholder="Email manzilingizni kiriting"
+              placeholder="Introduce tu dirección de correo electrónico"
               required
             />
           </div>
@@ -104,7 +104,7 @@ export default function Login() {
           <div className="form-group">
             <label className="form-label">
               <Lock size={18} />
-              Parol
+              Contraseña
             </label>
             <input
               type="password"
@@ -112,7 +112,7 @@ export default function Login() {
               value={formData.password}
               onChange={handleInputChange}
               className="form-input"
-              placeholder="Parolingizni kiriting"
+              placeholder="Introduce tu contraseña"
               required
             />
           </div>
@@ -125,16 +125,16 @@ export default function Login() {
             {loading ? (
               <span className="loading-spinner"></span>
             ) : (
-              'Kirish'
+              'Iniciar sesión'
             )}
           </button>
         </div>
 
         <div className="auth-toggle">
           <p>
-            Hisobingiz yo‘qmi?
+            ¿No tienes una cuenta?
             <a href="/register" className="toggle-link">
-              Ro‘yxatdan o‘tish
+              Registrarse
             </a>
           </p>
         </div>

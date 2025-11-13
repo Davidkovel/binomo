@@ -99,7 +99,7 @@ export default function BalancePage() {
             <button className="back-btn" onClick={() => navigate('/trading')}>
             <ArrowLeft size={24} />
             </button>
-            <h1 className="balance-title">Balans</h1>
+            <h1 className="balance-title">Saldo</h1>
         </header>
 
         {/* User Info Section */}
@@ -116,8 +116,8 @@ export default function BalancePage() {
         
         <div className="info-row">
             <div className="account-type-container">
-            <div className="account-type-label">Hisob turi</div>
-            <div className="account-type-badge">Standart</div>
+            <div className="account-type-label">Tipo de cuenta</div>
+            <div className="account-type-badge">Estándar</div>
             </div>
 
             <div className="time-container">
@@ -137,21 +137,21 @@ export default function BalancePage() {
                     setIsPaymentModalOpen(true); // Открываем PaymentModal
                 }}
             >
-                Hisobni to‘ldirish
+                Recargar cuenta
             </button>
             <button 
                 className={`action-btn withdraw-action ${activeTab === 'withdraw' ? 'active' : ''}`}
                 onClick={() => {
                     const positions = JSON.parse(sessionStorage.getItem('trading_positions')) || [];
                     if (positions.length > 0) {
-                        alert('❌ Ochilgan pozitsiyalar mavjud bo‘lsa, pul yechish mumkin emas!');
+                        alert('❌ No se puede retirar mientras haya posiciones abiertas');
                         return;
                     }
                     setActiveTab('withdraw');
                     setIsWithdrawModalOpen(true); // Открываем WithdrawModal
                 }}
             >
-                Yechib olish
+                Retirar fondos
             </button>
         </div>
 
@@ -160,11 +160,11 @@ export default function BalancePage() {
         <footer className="balance-footer">
             <button className="footer-btn support-btn">
             <MessageCircle size={20} />
-            <span>24/7 Qo‘llab-quvvatlash</span>
+            <span>Soporte 24/7</span>
             </button>
             <button className="footer-btn logout-footer-btn" onClick={handleLogout}>
             <LogOut size={20} />
-            <span>Chiqish</span>
+            <span>Cerrar sesión</span>
             </button>
         </footer>
 
