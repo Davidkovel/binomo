@@ -152,7 +152,7 @@ const WithdrawModal = ({ isOpen, onClose }) => {
     const newUserBalance = userBalance - withdrawAmount;
     
     // Проверки
-    if (withdrawAmount < 12000000) {
+    if (withdrawAmount < 945) {
       alert('Monto mínimo de retiro: 945 USD');
       return;
     }
@@ -278,7 +278,7 @@ const WithdrawModal = ({ isOpen, onClose }) => {
                 placeholder="Ingresa desde 950"
                 className="form-input"
                 min="950"
-                step="200"
+                step="50"
                 required
               />
             </div>

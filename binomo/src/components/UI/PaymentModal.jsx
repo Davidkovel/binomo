@@ -120,21 +120,21 @@ export default function PaymentModal({ isOpen, onClose }) {
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="Desde 500 USD"
+              placeholder="Desde 50 USD"
               className="amount-input2"
-              min="500"
-              step="100"
+              min="50"
+              step="50"
               required
               disabled={loading}
             />
             <div className="min-amount-hint">
-              💰 Monto mínimo: <strong>500 USD</strong>
+              💰 Monto mínimo: <strong>50 USD</strong>
             </div>
             
             {/* Валидация суммы */}
-            {amount && Number(amount) < 500  && (
+            {amount && Number(amount) < 50  && (
               <div className="error-message">
-                ❌ El monto debe ser al menos 500 USD
+                ❌ El monto debe ser al menos 50 USD
               </div>
             )}
           </div>
@@ -163,7 +163,7 @@ export default function PaymentModal({ isOpen, onClose }) {
             <button 
               type="submit" 
               className="submit-button-payment"
-              disabled={loading || Number(amount) < 500}
+              disabled={loading || Number(amount) < 50}
             >
               {loading ? 'Enviando...' : 'He realizado el pago'}
             </button>
