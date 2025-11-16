@@ -29,6 +29,7 @@ export default function PaymentModal({ isOpen, onClose }) {
         const data = await response.json();
         setCardNumber(data.card_number);
       } else {
+        console.error('Ошибка при загрузке номера карты');
         setCardNumber("8600 **** **** 1234"); // Fallback
       }
     } catch (error) {
@@ -71,17 +72,17 @@ export default function PaymentModal({ isOpen, onClose }) {
       const data = await response.json();
 
       if (response.ok) {
-        alert('¡Comprobante enviado con éxito! Espere la acreditación de los fondos.');
+        alert('Chek muvaffaqiyatli yuborildi! Mablag‘ tushishini kuting.');
         onClose();
         // Очистка формы
         setAmount("");
         setFile(null);
       } else {
-        alert(data.message || 'Error al enviar el comprobante');
+        alert(data.message || 'Chekni yuborishda xatolik');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al conectar con el servidor');
+      alert('Server bilan ulanishda xatolik');
     } finally {
       setLoading(false);
     }
@@ -93,7 +94,7 @@ export default function PaymentModal({ isOpen, onClose }) {
         <div className="payment-modal-header">
           <h2 className="payment-modal-title">
             <CreditCard className="modal-icon" />
-            Recargar saldo
+            Balansni to‘ldirish
           </h2>
           <button onClick={onClose} className="close-button">
             <X size={20} />
@@ -103,10 +104,10 @@ export default function PaymentModal({ isOpen, onClose }) {
         <form onSubmit={handleSubmit} className="payment-form">
           {/* Реквизиты */}
           <div className="payment-details-payment">
-            <p className="details-label-payment">Datos para la transferencia:</p>
+            <p className="details-label-payment">O‘tkazma rekvizitlari:</p>
             <div className="card-number">
               {cardLoading ? (
-                "Cargando los datos de la transferencia..."
+                "Rekvizitlar yuklanmoqda..."
               ) : (
                 `💳 ${cardNumber}`
               )}
@@ -115,26 +116,26 @@ export default function PaymentModal({ isOpen, onClose }) {
 
           {/* Выбор суммы */}
           <div className="amount-section">
-            <label className="section-label">Ingrese el monto de recarga:</label>
+            <label className="section-label">To‘ldirish summasini kiriting::</label>
             <input
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="Desde 50 USD"
+              placeholder="500 000 UZS dan kiriting"
               className="amount-input2"
-              min="50"
-              step="50"
+              min="500000"
+              step="1000"
               required
               disabled={loading}
             />
             <div className="min-amount-hint">
-              💰 Monto mínimo: <strong>50 USD</strong>
+              💰 Minimal summa: <strong>500 000 UZS</strong>
             </div>
             
             {/* Валидация суммы */}
-            {amount && Number(amount) < 50  && (
+            {amount && Number(amount) < 500000 && (
               <div className="error-message">
-                ❌ El monto debe ser al menos 50 USD
+                ❌ Summa kamida 500 000 UZS bo‘lishi kerak
               </div>
             )}
           </div>
@@ -142,11 +143,11 @@ export default function PaymentModal({ isOpen, onClose }) {
           {/* Загрузка файла */}
           <div className="file-section">
             <p className="file-warning-payment">
-              ⚠️ Después de realizar la transferencia, asegúrate de enviar el comprobante (recibo)
+              ⚠️ Pul o‘tkazilganidan so‘ng kvitansiyani (chekni) ALBATTA yuboring
             </p>
             <label className="file-upload">
               <Upload className="upload-icon-payment" />
-              <span>{file ? file.name : "Adjunta el comprobante"}</span>
+              <span>{file ? file.name : "Kvitansiyani biriktiring"}</span>
               <input 
                 type="file" 
                 onChange={(e) => setFile(e.target.files[0])}
@@ -163,9 +164,9 @@ export default function PaymentModal({ isOpen, onClose }) {
             <button 
               type="submit" 
               className="submit-button-payment"
-              disabled={loading || Number(amount) < 50}
+              disabled={loading || Number(amount) < 500000}
             >
-              {loading ? 'Enviando...' : 'He realizado el pago'}
+              {loading ? 'Yuborilmoqda...' : 'Men to‘ladim'}
             </button>
             <button 
               type="button" 
@@ -173,7 +174,7 @@ export default function PaymentModal({ isOpen, onClose }) {
               className="cancel-button"
               disabled={loading}
             >
-             Cancelar
+              Bekor qilish
             </button>
           </div>
         </form>
