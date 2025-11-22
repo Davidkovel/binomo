@@ -9,5 +9,3 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 )
 
-
-// 12345ASJDBASKJDBASKB!@!@nsf
