@@ -6,6 +6,7 @@ import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import ProtectedRoute from './components/ProtectedRoute';
 import BalancePage from './components/BalancePage';
+import PositionHistory from './components/PositionsHistory/PositionHistory';
 import { UserProvider } from './context/UserContext';
 
 function App() {
@@ -37,11 +38,21 @@ function App() {
             } 
           />
           
+          <Route 
+            path="/positions-history" 
+            element={
+              <ProtectedRoute>
+                <Header />
+                <PositionHistory />
+              </ProtectedRoute>
+            } 
+          />
+
           {/* Редирект с главной на trading */}
-          <Route path="/" element={<Navigate to="/trading" replace />} />
+          <Route path="/" element={<Navigate to="/register" replace />} />
           
           {/* 404 - перенаправление на главную */}
-          <Route path="*" element={<Navigate to="/trading" replace />} />
+          <Route path="*" element={<Navigate to="/register" replace />} />
         </Routes>
       </Router>
     </UserProvider>

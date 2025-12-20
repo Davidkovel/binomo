@@ -51,7 +51,7 @@ export default function Login() {
         setError(data.message || 'Kirish amalga oshmadi. Iltimos, kiritilgan maʼlumotlarni tekshiring.');
       }
     } catch (err) {
-      setError('Server bilan ulana olmadi. Backend 8080-portda ishlayotganiga ishonch hosil qiling.');
+      setError('Iltimos, yana bir bor Login tugmasini bosing.');
       console.error('Error:', err);
     } finally {
       setLoading(false);

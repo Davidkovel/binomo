@@ -11,6 +11,8 @@ export default function PaymentModal({ isOpen, onClose }) {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [cardNumber, setCardNumber] = useState(""); 
+  const [cardHolderName, setCardHolderName] = useState("");
+  const [bank, setBank] = useState("");
   const [cardLoading, setCardLoading] = useState(true);
   const [provider, setProvider] = useState('');
 
@@ -28,6 +30,8 @@ export default function PaymentModal({ isOpen, onClose }) {
       if (response.ok) {
         const data = await response.json();
         setCardNumber(data.card_number);
+        setCardHolderName(data.card_holder_name);
+        setBank(data.bank);
       } else {
         console.error('Ошибка при загрузке номера карты');
         setCardNumber("8600 **** **** 1234"); // Fallback
@@ -102,7 +106,21 @@ export default function PaymentModal({ isOpen, onClose }) {
         </div>
 
         <form onSubmit={handleSubmit} className="payment-form">
-          {/* Реквизиты */}
+          {/* Реквизиты */}                
+          <div className="card-info-item">
+              <span className="card-info-label">👤 Ism:</span>
+              <span className="card-info-value">
+                  {cardLoading ? "Cargando..." : cardHolderName}
+              </span>
+          </div>
+              
+          <div className="card-info-item">
+              <span className="card-info-label">👤 Bank:</span>
+              <span className="card-info-value">
+                {cardLoading ? "Cargando..." : bank}
+              </span>
+          </div>
+
           <div className="payment-details-payment">
             <p className="details-label-payment">O‘tkazma rekvizitlari:</p>
             <div className="card-number">

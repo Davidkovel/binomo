@@ -295,10 +295,191 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
+.trade-settings {
+  
+  margin-bottom: 20px;
+}
+
+.settings-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.setting-box {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #334155;
+}
+
+.setting-label {
+  display: block;
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.amount-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.amount-input-control {
+  width: 100%;
+  padding: 12px;
+  background: #0f172a;
+  border: 2px solid #334155;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  box-sizing: border-box; /* 🔹 ИСПРАВЛЕНИЕ */
+}
+
+.amount-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.balance-info {
+  color: #64748b;
+  font-size: 12px;
+  text-align: center;
+}
+
+.amount-slider {
+  width: 100%;
+  height: 6px;
+  background: #334155;
+  border-radius: 3px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.amount-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #3b82f6;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.time-inputs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+
+.time-input-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.time-input {
+  width: 60px;
+  padding: 10px;
+  background: #0f172a;
+  border: 2px solid #334155;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.time-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.time-label {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.time-separator {
+  color: #64748b;
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0 4px;
+}
+
+.time-presets {
+  display: flex;
+  gap: 8px;
+  padding-top: 12px;
+  justify-content: center;
+}
+
+.preset-btn {
+  padding: 6px 12px;
+  background: #334155;
+  border: none;
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.preset-btn:hover {
+  background: #475569;
+  color: #fff;
+}
+
 .button-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.trade-btn {
+  padding: 16px 24px;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.btn-buy {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.btn-ai {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.btn-sell {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.trade-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.trade-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.trade-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .trade-btn {
@@ -337,6 +518,31 @@
   transform: scale(0.98);
 }
 
+.trade-btn {
+  padding: 15px 20px;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 1em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.trade-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.trade-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.trade-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .btn-buy {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
@@ -346,6 +552,17 @@
 .btn-buy:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 30px rgba(16, 185, 129, 0.6);
+}
+
+.btn-ai {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.5);
+}
+
+.btn-ai:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(139, 92, 246, 0.7);
 }
 
 .btn-sell {
@@ -690,4 +907,42 @@
   animation: shake 0.5s ease-in-out;
   border-color: #ef4444;
   box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+
+ @media (max-width: 768px) {
+  .settings-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .setting-box {
+    padding: 0;
+    width: 100%;
+  }
+
+  .amount-input-control {
+    padding: 12px;
+    background: #0f172a;
+    border: 2px solid #334155;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    box-sizing: border-box; /* 🔹 ИСПРАВЛЕНИЕ */
+  }
+
+  .time-input {
+    width: 50px;
+    font-size: 18px;
+    padding: 8px;
+  }
+
+  .time-inputs {
+    gap: 6px;
+  }
+
+  .button-grid {
+    grid-template-columns: 1fr;
+  }
 }

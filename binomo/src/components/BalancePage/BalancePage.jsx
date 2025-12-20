@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, CreditCard, LogOut, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Clock, CreditCard, LogOut, MessageCircle, History } from 'lucide-react';
 import './BalancePage.css';
 import PaymentModal from '../UI/PaymentModal';
 import WithdrawModal from '../UI/WithdrawModal';
@@ -92,6 +92,10 @@ export default function BalancePage() {
         return `${utcHours}:${utcMinutes}:${utcSeconds}`;
     };
 
+    const handlePosition = () => {
+        navigate('/positions-history');
+    };
+
     return (
         <div className="balance-page">
         {/* Header */}
@@ -125,6 +129,12 @@ export default function BalancePage() {
             <span className="time-label">UTC:</span>
             <span className="time-value">{getUTCTime()}</span>
             </div>
+
+            {/* Button history positions */}
+            <button className="position-history-btn" onClick={handlePosition}>
+                <History size={20} />
+                <span>Historial de posiciones</span>
+            </button>
         </div>
         </div>
 

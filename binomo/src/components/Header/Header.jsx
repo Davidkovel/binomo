@@ -22,7 +22,7 @@ const Header = () => {
   // Загрузка позиций из localStorage
   const loadEntriesFromStorage = () => {
     try {
-      const saved = sessionStorage.getItem('trading_positions');
+      const saved = localStorage.getItem('trading_positions');
       return saved ? JSON.parse(saved) : [];
     } catch (error) {
       console.error('Error loading positions from localStorage:', error);
@@ -85,6 +85,7 @@ const Header = () => {
     localStorage.removeItem("hasTraded");
     localStorage.removeItem("pendingWithdraw");
     localStorage.removeItem("initial_deposit");
+    localStorage.removeItem("trading_positions");
 
     
     setIsAuthenticated(false);

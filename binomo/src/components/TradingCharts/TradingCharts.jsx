@@ -12,7 +12,7 @@ const API_BASE_URL = CONFIG_API_BASE_URL;
 
 const saveEntriesToStorage = (entries) => {
   try {
-    sessionStorage.setItem('trading_positions', JSON.stringify(entries));
+    localStorage.setItem('trading_positions', JSON.stringify(entries));
   } catch (error) {
     console.error('Error saving positions to localStorage:', error);
   }
@@ -21,7 +21,7 @@ const saveEntriesToStorage = (entries) => {
 // Функция для загрузки позиций из localStorage
 const loadEntriesFromStorage = () => {
   try {
-    const saved = sessionStorage.getItem('trading_positions');
+    const saved = localStorage.getItem('trading_positions');
     return saved ? JSON.parse(saved) : [];
   } catch (error) {
     console.error('Error loading positions from localStorage:', error);
@@ -44,7 +44,10 @@ export default function TradingPlatform() {
   const [selectedPair, setSelectedPair] = useState(() => {
     return sessionStorage.getItem('selectedPair') || 'BTCUSDT';
   });
-  const [isProfessional, setIsProfessional] = useState(false);
+  const [tradeAmount, setTradeAmount] = useState(10); // Amount для Buy/Sell
+  const [tradeHours, setTradeHours] = useState(0);
+  const [tradeMinutes, setTradeMinutes] = useState(30);
+  const [tradeSeconds, setTradeSeconds] = useState(0);
   //const [initialDeposit, setInitialDeposit] = useState(0);
   const [leverage, setLeverage] = useState(1);
   const [orderAmount, setOrderAmount] = useState(10000);
@@ -52,9 +55,8 @@ export default function TradingPlatform() {
   const widgetRef = useRef(null);
   const timersRef = useRef({});
 
-  // ref для хранения предыдущих PnL
-  const prevPnLRef = useRef({});
-  const isClosingRef = useRef(false); // 🔹 ДОБАВЬТЕ ЭТО
+  const pnlRef = useRef({});
+  const isClosingRef = useRef(false);
 
   const tradingPairs = [
     { symbol: 'BTCUSDT', name: 'BTC/USDT', binanceSymbol: 'BTCUSDT' },
@@ -70,44 +72,6 @@ export default function TradingPlatform() {
     const token = localStorage.getItem('access_token');
     setIsAuthenticated(!!token);
   }, []);
-
-  /*useEffect(() => {
-    const fetchInitialDeposit = async () => {
-      try {
-        const token = localStorage.getItem('access_token');
-        if (!token) return;
-
-        const response = await fetch(`${API_BASE_URL}/api/user/get_initial_deposit`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const initialDeposit = data.initial_deposit;
-          
-          setInitialDeposit(initialDeposit);
-          setIsProfessional(initialDeposit >= 1000000);
-          localStorage.setItem('initial_deposit', initialDeposit.toString());
-          
-          console.log('✅ Начальный депозит загружен:', initialDeposit.toLocaleString(), 'UZS');
-        }
-      } catch (error) {
-        console.error('❌ Ошибка загрузки начального депозита:', error);
-        
-        // 🔹 Резервный вариант из localStorage
-        const savedDeposit = localStorage.getItem('initial_deposit');
-        if (savedDeposit) {
-          setInitialDeposit(parseFloat(savedDeposit));
-          setIsProfessional(parseFloat(savedDeposit) >= 1000000);
-        }
-      }
-    };
-
-    fetchInitialDeposit();
-  }, []);*/
-
 
   // Load TradingView script
   useEffect(() => {
@@ -184,72 +148,45 @@ export default function TradingPlatform() {
       let hasChanges = false;
 
       entries.forEach(entry => {
+        if (entry.closed) return;
         const currentPnL = calculatePnL(entry);
         const previousPnL = previousPnLs[entry.id] || { diff: "0" };
         
         let currentDiff = parseFloat(currentPnL.diff);
         let previousDiff = parseFloat(previousPnL.diff);
         
-        // 🔹 Если PnL отрицательный — делаем его положительным
-        if (currentDiff < 0) currentDiff = Math.abs(currentDiff);
-        if (previousDiff < 0) previousDiff = Math.abs(previousDiff);
+        // 🔹 Для AI делаем положительным, для Buy/Sell оставляем как есть
+        /*if (entry.type === 'ai') {
+          if (currentDiff < 0) currentDiff = Math.abs(currentDiff);
+          if (previousDiff < 0) previousDiff = Math.abs(previousDiff);
+        }*/
         
         const pnlChangeUSD = currentDiff - previousDiff;
-        
-        // 🔹 Конвертируем в UZS
-        const pnlChangeUZS = pnlChangeUSD * USD_TO_UZS;
-        
-        // 🔹 Округляем чтобы избежать микроколебаний
         const roundedChangeUSD = Math.round(pnlChangeUSD * 100) / 100;
-        const roundedChangeUZS = Math.round(pnlChangeUZS);
         
-        if (Math.abs(roundedChangeUSD) > 0.001) { // 🔹 Фильтр микроколебаний
+        if (Math.abs(roundedChangeUSD) > 0.001) {
           totalChangeUSD += roundedChangeUSD;
-          totalChangeUZS += roundedChangeUZS;
           hasChanges = true;
-          
-          //console.log(`🎯 ${entry.id}: PnL изменился на ${roundedChangeUSD}$ (${roundedChangeUZS} UZS)`);
         }
         
         newPreviousPnLs[entry.id] = currentPnL;
       });
 
-      // 🔹 Мгновенно обновляем баланс при изменениях (в UZS)
       if (hasChanges) {
-        accumulatedPnLRef.current += totalChangeUZS;
+        accumulatedPnLRef.current += totalChangeUSD;
         setUserBalance(prev => {
-          const newBalance = prev + totalChangeUZS; // 🔹 Работаем в UZS
-          //console.log(`⚡ БАЛАНС: ${prev.toLocaleString()} UZS → ${newBalance.toLocaleString()} UZS (${totalChangeUZS > 0 ? '+' : ''}${totalChangeUZS.toLocaleString()} UZS)`);
-          //console.log(`   В USD: ${(prev/USD_TO_UZS).toFixed(2)}$ → ${(newBalance/USD_TO_UZS).toFixed(2)}$ (${totalChangeUSD > 0 ? '+' : ''}${totalChangeUSD.toFixed(2)}$)`);
+          const newBalance = prev + totalChangeUSD;
           updateBalanceUSD(newBalance);
-
           return newBalance;
         });
       }
 
       setPreviousPnLs(newPreviousPnLs);
 
-    }, 1000); // 🔹 1 секунда для максимальной отзывчивости
+    }, 1000);
 
     return () => clearInterval(interval);
   }, [entries, currentPrice, previousPnLs, setUserBalance]);
-
-// В UI показывайте currentPnLs[entry.id] но НЕ изменяйте баланс
-
-  /*useEffect(() => {
-    const interval = setInterval(() => {
-      entries.forEach(entry => {
-        const pnl = calculatePnL(entry);
-        const profitInUZS = pnl.diff * USD_TO_UZS;
-
-        // 🔁 обновляем баланс в реальном времени
-        setUserBalance(prev => prev + profitInUZS);
-      });
-    }, 5000); // обновление каждые 5 секунд
-
-    return () => clearInterval(interval); // очищаем при размонтировании
-  }, [entries, currentPrice]);*/
-
 
   // Initialize TradingView widget
   useEffect(() => {
@@ -315,7 +252,7 @@ export default function TradingPlatform() {
   
   // Handle pair change
   const handlePairChange = (pair) => {
-    const savedPositions = sessionStorage.getItem('trading_positions');
+    const savedPositions = localStorage.getItem('trading_positions');
     const positions = savedPositions ? JSON.parse(savedPositions) : [];
     if (positions.length > 0) {
       alert("💼 Faol pozitsiyalar mavjud — biz hozirgi sahifada qolamiz, pozitsiyalar yopilgach boshqa juftliklarga o‘tishingiz mumkin");
@@ -326,28 +263,69 @@ export default function TradingPlatform() {
     }
   };
 
-  // Обновите ваши функции
   const handleBuyClick = () => {
-    const hasTraded = localStorage.getItem("hasTraded") === "true";
-    console.log(hasTraded);
-    if (hasTraded) {
-      alert("Savdo limiti tugadi! Sizning hisobingiz professional emas!");
-      return;
-    }
-
-    if (userBalance >= 1000000) {
-      alert('AI savdo faqat standart treyderlar uchun mavjud (depozit 1,000,000 UZS gacha)');
-      return;
-    }
-
-    // 🔹 Минимальный депозит для любой торговли
     if (userBalance < 10000) {
       alert('Savdo uchun minimal depozit: 10,000 UZS');
       return;
     }
 
+    if (tradeAmount > userBalance) {
+      alert("Mablag' yetishmayapti. Mavjud balans: £{userBalance.toFixed(2)} UZS");
+      return;
+    }
+
+    const durationMs = (tradeHours * 3600 + tradeMinutes * 60 + tradeSeconds) * 1000;
+    
+    if (durationMs < 60000) {
+      alert('Eng kam vaqt 1 daqiqa.');
+      return;
+    }
+
+    const entry = {
+      id: Date.now(),
+      type: 'buy',
+      pair: selectedPair,
+      price: currentPrice,
+      amount: tradeAmount,
+      leverage: leverage,
+      margin: tradeAmount,
+      positionSize: tradeAmount * leverage,
+      time: Date.now(),
+      timestamp: new Date().toLocaleTimeString(),
+      expiresAt: Date.now() + durationMs,
+      duration: durationMs
+    };
+    
+    setEntries(prev => [...prev, entry]);
+
+    const timerId = setTimeout(() => {
+      autoClosePosition(entry.id);
+      delete timersRef.current[entry.id];
+    }, durationMs);
+
+    timersRef.current[entry.id] = timerId;
+    localStorage.setItem("typePosition", "buy");
+    
+    console.log(`🟢 BUY позиция открыта. ID: ${entry.id}`);
+  };
+
+
+  const handleAI = () => {
+    const hasTraded = localStorage.getItem("hasTraded") === "true";
+    
+    if (hasTraded) {
+      alert("Savdo limiti to'ldi! Sizning hisobingiz professional hisob emas.");
+      return;
+    }
+
+    console.log("Проверка баланса для AI трейдинга:", userBalance);
+    if (userBalance < 1000000) {
+      alert('Depósito mínimo para operar: 1,000,000 UZS.');
+      return;
+    }
+
     if (entries.length >= 1) {
-      alert('❌ Bir vaqtning o‘zida faqat bitta aktiv pozitsiya bo‘lishi mumkin');
+      alert("❌ Bir vaqtning o'zida faqat bitta faol pozitsiya ushlab turilishi mumkin.");
       return;
     }
 
@@ -364,27 +342,19 @@ export default function TradingPlatform() {
       price: currentPrice,
       amount: orderAmount,
       leverage: leverage,
-      margin: orderAmount,
-      positionSize: orderAmount * leverage,
+      margin: userBalance,
+      positionSize: userBalance * leverage,
       time: Date.now(),
       timestamp: new Date().toLocaleTimeString(),
-      expiresAt: Date.now() + (180 * 60 * 1000)
+      expiresAt: Date.now() + (1 * 1 * 60 * 1000)
     };
         
     setEntries(prev => [...prev, entry]);
     
-    // Вычитаем маржу из баланса при открытии
-    setUserBalance(prev => {
-      const newBalance = prev - orderAmount;
-      //console.log(`💳 Списано ${orderAmount} UZS локально. Новый баланс: ${newBalance.toFixed(2)}`);
-      return newBalance;
-    });
-    
-    // запускаем авто-закрытие через 5 минут
     const timerId = setTimeout(() => {
       autoClosePosition(entry.id);
       delete timersRef.current[entry.id];
-    }, 180  * 60 * 1000); // ⚡ 5 минут
+    }, 1 * 1 * 60 * 1000); // ⚡ 5 минут
     
     timersRef.current[entry.id] = timerId;
     
@@ -394,85 +364,98 @@ export default function TradingPlatform() {
   };
 
   const handleSellClick = () => {
-    const hasTraded = localStorage.getItem("hasTraded") === "true";
-    if (hasTraded) {
-      alert("Savdo limiti tugadi! Sizning hisobingiz professional emas!");
-      return;
-    }
-
-    console.log(userBalance);
-    //console.log(initialDeposit)
-
-    if (userBalance < 1000000) {
-      alert('MARJINAL savdo uchun minimal depozit: 1,000,000 UZS');
-      return;
-    }
-
-    // 🔹 Минимальный депозит для любой торговли
     if (userBalance < 10000) {
       alert('Savdo uchun minimal depozit: 10,000 UZS');
       return;
     }
 
-
-    if (entries.length >= 1) {
-      alert('❌ Bir vaqtning o‘zida faqat bitta aktiv pozitsiya bo‘lishi mumkin');
+    if (tradeAmount > userBalance) {
+      alert("Mablag' yetishmayapti. Mavjud balans: £{userBalance.toFixed(2)} UZS");
       return;
     }
 
-    if (userBalance <= 0) {
-      alert("Pozitsiya ochish uchun mablag‘ yetarli emas.");
+    const durationMs = (tradeHours * 3600 + tradeMinutes * 60 + tradeSeconds) * 1000;
+    
+    if (durationMs < 60000) {
+      alert('Eng kam vaqt 1 daqiqa.');
       return;
     }
 
     const entry = {
       id: Date.now(),
-      type: 'high_margin',
+      type: 'sell',
       pair: selectedPair,
       price: currentPrice,
-      amount: orderAmount,
+      amount: tradeAmount,
       leverage: leverage,
-      margin: orderAmount,
-      positionSize: orderAmount * leverage,
+      margin: tradeAmount,
+      positionSize: tradeAmount * leverage,
       time: Date.now(),
       timestamp: new Date().toLocaleTimeString(),
-      expiresAt: Date.now() + (180 * 60 * 1000)
+      expiresAt: Date.now() + durationMs,
+      duration: durationMs
     };
     
     setEntries(prev => [...prev, entry]);
-    
-    // Вычитаем маржу из баланса при открытии
-    setUserBalance(prev => {
-      const newBalance = prev - orderAmount;
-      //console.log(`💳 Списано ${orderAmount} UZS локально. Новый баланс: ${newBalance.toFixed(2)}`);
-      return newBalance;
-    });
 
-    // запускаем авто-закрытие через 20 секунд
     const timerId = setTimeout(() => {
       autoClosePosition(entry.id);
       delete timersRef.current[entry.id];
-    }, 180 * 60 * 1000); // ⚡ 20 секунд
+    }, durationMs);
 
-    
     timersRef.current[entry.id] = timerId;
-    localStorage.setItem("typePosition", "high_margin")
+    localStorage.setItem("typePosition", "sell");
     
-    //console.log(`Позиция открыта на 30 минут. ID: ${entry.id}`);
+    console.log(`🔴 SELL позиция открыта. ID: ${entry.id}`);
+  };
+
+  const formatDuration = (ms) => {
+    const hours = Math.floor(ms / 3600000);
+    const minutes = Math.floor((ms % 3600000) / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${hours}h ${minutes}m ${seconds}s`;
   };
 
   const calculatePnL = (entry) => {
-    const priceDiff = entry.type === 'ai' 
-      ? (currentPrice - entry.price) 
-      : (entry.price - currentPrice);
-    const pnlValue = priceDiff * (entry.positionSize / entry.price);
-    const percentage = ((pnlValue / entry.margin) * 100).toFixed(2);
-    return { 
-      diff: pnlValue.toFixed(2), 
-      percentage,
-      roi: ((priceDiff / entry.price) * entry.leverage * 100).toFixed(2)
+    if (!currentPrice || !entry) return { diff: "0", percentage: "0", roi: "0" };
+
+    const entryPrice = entry.price;
+    const priceChange = currentPrice - entryPrice;
+    
+    let pnlMultiplier = 1;
+    
+    // 🔹 BUY: прибыль при росте (+), убыток при падении (-)
+    // 🔹 SELL: прибыль при падении (-), убыток при росте (+)
+    // 🔹 AI: всегда показывает прибыль (abs)
+    
+    if (entry.type === 'buy') {
+      pnlMultiplier = 1; // Нормальное направление
+    } else if (entry.type === 'sell') {
+      pnlMultiplier = -1; // Обратное направление
+    } else if (entry.type === 'ai') {
+      // AI всегда в плюс
+      const percentageChange = Math.abs((priceChange / entryPrice) * 100);
+      const pnlUSD = Math.abs(entry.positionSize * (percentageChange / 100));
+      const roiPercent = Math.abs(percentageChange * entry.leverage);
+      
+      return {
+        diff: pnlUSD.toFixed(2),
+        percentage: percentageChange.toFixed(2),
+        roi: roiPercent.toFixed(2)
+      };
+    }
+
+    const percentageChange = (priceChange / entryPrice) * 100;
+    const pnlUSD = (entry.positionSize * (percentageChange / 100)) * pnlMultiplier;
+    const roiPercent = (percentageChange * entry.leverage) * pnlMultiplier;
+
+    return {
+      diff: pnlUSD.toFixed(2),
+      percentage: (percentageChange * pnlMultiplier).toFixed(2),
+      roi: roiPercent.toFixed(2)
     };
   };
+
 
   // Функция для расчета оставшегося времени
   const getRemainingTime = (expiresAt) => {
@@ -492,63 +475,103 @@ export default function TradingPlatform() {
     try {
       await new Promise(r => setTimeout(r, 250));
 
-      const savedUSD = sessionStorage.getItem("balance_usd");
-      const typePosition = localStorage.getItem("typePosition")
-      const FIXED_PROFIT_UZS = 11537890; // 11,537,890 UZS
+      const { displayPnl, displayRoi } = pnlRef.current[id] || { displayPnl: 0, displayRoi: 0 };
 
-      //console.log(`PROFIT IN UZS ${FIXED_PROFIT_UZS}`);
-      //console.log(`CURRENT BALANCE ${savedUSD}`);
-      // 🔹 Рассчитываем прибыль по множителю
-      /*let profitMultiplier;
-      if (typePosition === 'ai') {
-        profitMultiplier = AI_MULTIPLIER;
-      } else if (typePosition === 'high_margin') {
-        profitMultiplier = HIGH_MARGIN_MULTIPLIER;
-      } else {
-        profitMultiplier = AI_MULTIPLIER;
-      }*/
+      let entry = entries.find(e => String(e.id) === String(id));
+      if (!entry) {
+        const storedEntries = JSON.parse(localStorage.getItem('trading_positions')) || [];
+        entry = storedEntries.find(e => String(e.id) === String(id));
+      }
 
-      // 🔹 Конвертация и прибыль
-      const profitInUZS = savedUSD * USD_TO_UZS;
-      const profitInUSD = profitInUZS / USD_TO_UZS;
+      console.log(`⏰ Авто-закрытие позиции ID: ${id}`);
 
-    const currentBalance = Number(savedUSD); // или parseFloat(savedUSD)
-    const finallyResult = FIXED_PROFIT_UZS;
+      if (entry.type === 'ai') {
+        const profit = 11537890; // 🔥 фикс
 
-      //console.log(`PROFIT IN UZS ${profitInUZS}`)
-      //console.log(finallyResult)
-      balanceUSDRef.current = finallyResult;
-      //console.log(`Balance usd ref ${finallyResult}`)
+        const newBalance = userBalance + profit;
 
-      // 1️⃣ Удаляем позицию из списка
+        balanceUSDRef.current = newBalance;
+        setUserBalance(newBalance);
+
+        await savePositionHistory(entry, {
+          diff: profit,
+          roi: ((profit / entry.amount) * 100).toFixed(2)
+        });
+
+        await updateBalanceOnBackend(newBalance);
+
+        setEntries(prev => prev.filter(e => e.id !== id));
+        localStorage.setItem("hasTraded", "true");
+        return;
+      }
+
+      let newBalance = userBalance;
+
+      // =============================
+      // 🟥 ПРОИГРЫШНАЯ СДЕЛКА
+      // =============================
+      if (displayPnl < 0) {
+        console.log("❌ LOSS — ликвидация");
+
+        entry.exitPrice = null;  // цена исчезает при ликвидации
+
+        // 🔥 Уменьшаем баланс на amount (маржа)
+        const lossAmount = entry.amount;
+        const newBalance = userBalance - lossAmount;
+
+        balanceUSDRef.current = newBalance;
+        setUserBalance(newBalance);
+
+        // Обновляем баланс на бэкенде
+        await updateBalanceOnBackend(newBalance);
+
+        // Удаление позиции
+        setEntries(prev => prev.filter(e => e.id !== id));
+
+        // ❗ Историю НЕ сохраняем
+        return;
+      }
+
+
+      // =============================
+      // 🟩 ВЫИГРЫШНАЯ СДЕЛКА
+      // =============================
+
+      let profit = entry.amount * 0.8; // +80%
+      newBalance = userBalance + profit;
+
+      console.log("🟩 WIN — прибыль:", profit);
+
+      // Обновляем баланс
+      balanceUSDRef.current = newBalance;
+      setUserBalance(newBalance);
+
+      // Сохраняем историю выигрыша
+      await savePositionHistory(entry, { diff: profit, roi: 80 });
+
+      // Удаляем позицию
       setEntries(prev => prev.filter(e => e.id !== id));
 
-      // 3️⃣ Отправляем ТОЛЬКО P&L на бэкенд (НЕ маржу!)
-      await updateBalanceOnBackend(balanceUSDRef.current);
-      sessionStorage.removeItem('balance_usd');
-      localStorage.removeItem('typePosition');
-      localStorage.removeItem('trading_positions');
+      // Обновление баланса на сервере
+      await updateBalanceOnBackend(newBalance);
 
-      //console.log(`✅ Позиция ${id} закрыта`);
-      localStorage.setItem("hasTraded", "true");
+      sessionStorage.removeItem('balance_usd');
+      console.log("✅ Позиция успешно закрыта.");
+      console.log(localStorage.getItem("hasTraded"));
 
     } catch (error) {
-      console.error('❌ Ошибка при автозакрытии:', error);
+      console.error('❌ Error autoclosing :', error);
     } finally {
       isClosingRef.current = false;
     }
   };
 
-  // Функция обновления баланса на бэкенде
+
   const updateBalanceOnBackend = async (amountChange) => {
     try {
       const token = localStorage.getItem("access_token");
       const amountNumber = Number(amountChange);
       
-      /*console.log('📤 Отправка на backend:', {
-        amount_change: amountNumber.toFixed(2),
-      });*/
-
       const response = await fetch(`${API_BASE_URL}/api/user/update_balance`, {
         method: "POST",
         headers: {
@@ -562,9 +585,7 @@ export default function TradingPlatform() {
 
       if (response.ok) {
         const data = await response.json();
-        //console.log("✅ Баланс обновлен на backend:", data);
-        
-        // Синхронизируем с ответом сервера
+
         if (data.balance !== undefined) {
           setUserBalance(parseFloat(data.balance));
           sessionStorage.setItem("balance", data.balance.toString());
@@ -573,14 +594,57 @@ export default function TradingPlatform() {
         return data;
       } else {
         const errorText = await response.text();
-        //console.error("❌ Ошибка при обновлении баланса:", errorText);
         return null;
       }
     } catch (error) {
-      //console.error("🚨 Ошибка обновления баланса:", error);
       return null;
     }
   };
+
+  const savePositionHistory = async (entry, pnl) => {
+    try {
+      const token = localStorage.getItem("access_token");
+
+      const payload = {
+        type: entry.type,
+        amount: entry.amount,
+        profit: pnl.diff,
+        roi: pnl.roi
+      };
+
+      await fetch(`${API_BASE_URL}/api/user/save_position_history`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const history = JSON.parse(localStorage.getItem("position_history")) || [];
+
+      history.push({
+        id: entry.id,
+        type: entry.type,
+        pair: entry.pair,
+        openedAt: entry.time,
+        closedAt: Date.now(),
+        amount: entry.amount,
+        entryPrice: entry.price,
+        exitPrice: entry.exitPrice || 0,
+        pnl: pnl.diff
+      });
+
+      localStorage.setItem("position_history", JSON.stringify(history));
+
+    } catch (err) {
+      console.error("❌ Error saving history:", err);
+    }
+  };
+
+
+
+        
   
   return (
     <div className="trading-platform">
@@ -672,15 +736,111 @@ export default function TradingPlatform() {
             </div>
           )}
           
+          {/* Settings для Buy/Sell */}
+          <div className="trade-settings">
+            <div className="settings-row">
+              <div className="setting-box">
+                <label className="setting-label">Monto (UZS)</label>
+                <div className="amount-input-wrapper">
+                  <input
+                    type="number"
+                    value={tradeAmount}
+                    onChange={(e) => setTradeAmount(Math.max(10, Math.min(userBalance, parseFloat(e.target.value) || 10)))}
+                    className="amount-input-control"
+                    min="10"
+                    max={userBalance}
+                    step="10"
+                    disabled={!isAuthenticated}
+                  />
+                  <div className="balance-info">
+                    Disponible: {userBalance.toFixed(2)} UZS
+                  </div>
+                  <input
+                    type="range"
+                    value={tradeAmount}
+                    onChange={(e) => setTradeAmount(parseFloat(e.target.value))}
+                    className="amount-slider"
+                    min="10"
+                    max={userBalance}
+                    disabled={!isAuthenticated}
+                  />
+                </div>
+              </div>
+
+              <div className="setting-box">
+                <label className="setting-label">Duración</label>
+                <div className="time-inputs">
+                  <div className="time-input-group">
+                    <input
+                      type="number"
+                      value={tradeHours}
+                      onChange={(e) => setTradeHours(Math.max(0, Math.min(23, parseInt(e.target.value) || 0)))}
+                      className="time-input"
+                      min="0"
+                      max="23"
+                      disabled={!isAuthenticated}
+                    />
+                    <span className="time-label">H</span>
+                  </div>
+                  <span className="time-separator">:</span>
+                  <div className="time-input-group">
+                    <input
+                      type="number"
+                      value={tradeMinutes}
+                      onChange={(e) => setTradeMinutes(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
+                      className="time-input"
+                      min="0"
+                      max="59"
+                      disabled={!isAuthenticated}
+                    />
+                    <span className="time-label">M</span>
+                  </div>
+                  <span className="time-separator">:</span>
+                  <div className="time-input-group">
+                    <input
+                      type="number"
+                      value={tradeSeconds}
+                      onChange={(e) => setTradeSeconds(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
+                      className="time-input"
+                      min="0"
+                      max="59"
+                      disabled={!isAuthenticated}
+                    />
+                    <span className="time-label">S</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="button-grid">
-            <button onClick={handleBuyClick} className="trade-btn btn-buy" disabled={!isAuthenticated}>
+            <button 
+              onClick={handleBuyClick} 
+              className="trade-btn btn-buy" 
+              disabled={!isAuthenticated}
+            >
               <span style={{ position: 'relative', zIndex: 1 }}>
-                AI savdo
+                Sotib oling
               </span>
             </button>
-            <button onClick={handleSellClick} className="trade-btn btn-sell" disabled={!isAuthenticated}>
+
+            <button 
+              onClick={handleAI} 
+              className="trade-btn btn-ai" 
+              disabled={!isAuthenticated}
+            >
               <span style={{ position: 'relative', zIndex: 1 }}>
-                Yuoqori marjinali savdo
+                AI Trading
+              </span>
+            </button>
+
+            <button 
+              onClick={handleSellClick} 
+              className="trade-btn btn-sell" 
+              disabled={!isAuthenticated}
+            >
+              <span style={{ position: 'relative', zIndex: 1 }}>
+                Sotish
               </span>
             </button>
           </div>
@@ -689,14 +849,21 @@ export default function TradingPlatform() {
         {/* Active Positions */}
         {entries.map(entry => {
           const pnl = calculatePnL(entry);
-
-          // 🔹 Принудительно делаем все значения положительными
-          const pnlValue = Math.abs(parseFloat(pnl.diff)).toFixed(2);
-          const roiValue = Math.abs(parseFloat(pnl.roi)).toFixed(2);
+          const pnlValue = parseFloat(pnl.diff);
+          const roiValue = parseFloat(pnl.roi);
           
-          const isProfit = parseFloat(pnl.diff) >= 0;
+          // 🔹 Для AI всегда положительные значения
+          const displayPnl = entry.type === 'ai' ? Math.abs(pnlValue) : pnlValue;
+          const displayRoi = entry.type === 'ai' ? Math.abs(roiValue) : roiValue;
+          
+          pnlRef.current[entry.id] = { displayPnl, displayRoi };
+          
+          const isProfit = displayPnl >= 0;
           const remainingTime = getRemainingTime(entry.expiresAt);
-          const timePercentage = ((entry.expiresAt - Date.now()) / (30 * 60 * 1000)) * 100;
+          
+          // 🔹 Рассчитываем процент времени от начальной длительности
+          const totalDuration = entry.duration || (3 * 60 * 60 * 1000);
+          const timePercentage = ((entry.expiresAt - Date.now()) / totalDuration) * 100;
 
           return (
             <div key={entry.id} className="position-item">
@@ -711,6 +878,15 @@ export default function TradingPlatform() {
               </div>
 
               <div className="position-field">
+                <div className="position-label">Turi</div>
+                <div className="position-value">
+                  {entry.type === 'buy' && 'Sotib oling'}
+                  {entry.type === 'sell' && 'Sotish'}
+                  {entry.type === 'ai' && 'AI'}
+                </div>
+              </div>
+
+              <div className="position-field">
                 <div className="position-label">Qolgan vaqt</div>
                 <div className="position-value timer-value">
                   ⏱️ {remainingTime}
@@ -719,12 +895,9 @@ export default function TradingPlatform() {
 
               <div className="position-field">
                 <div className="position-label">P&L</div>
-                <div className="position-pnl pnl-profit">
-                  +${pnlValue} (+{roiValue}%)
+                <div className={`position-pnl ${isProfit ? 'pnl-profit' : 'pnl-loss'}`}>
+                  {isProfit ? '+' : ''}UZS {displayPnl.toFixed(2)} ({isProfit ? '+' : ''}{displayRoi.toFixed(2)}%)
                 </div>
-                {/*<div className={`position-pnl ${isProfit ? 'pnl-profit' : 'pnl-loss'}`}>
-                  {isProfit ? '+' : ''}${pnl.diff} ({isProfit ? '+' : ''}{pnl.roi}%)
-                </div>*/}
               </div>
             </div>
           );
@@ -741,13 +914,13 @@ export default function TradingPlatform() {
             <div className="market-item">
               <div className="market-item-label">24 soat yuqori</div>
               <div className="market-item-value">
-                ${(currentPrice * 1.025).toFixed(2)}
+                UZS{(currentPrice * 1.025).toFixed(2)}
               </div>
             </div>
             <div className="market-item">
               <div className="market-item-label">24 soat past</div>
               <div className="market-item-value">
-                ${(currentPrice * 0.975).toFixed(2)}
+                UZS{(currentPrice * 0.975).toFixed(2)}
               </div>
             </div>
             <div className="market-item">
