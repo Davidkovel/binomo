@@ -77,8 +77,8 @@ export default function PositionHistory() {
   };
 
   const getTypeLabel = (type) => {
-    if (type === 'buy') return 'Comprar';
-    if (type === 'sell') return 'Vender';
+    if (type === 'buy') return 'Sotib oling';
+    if (type === 'sell') return 'Sotish';
     return 'AI';
   };
 
@@ -98,7 +98,7 @@ export default function PositionHistory() {
       <div className="history-container">
         <div className="loading-spinner">
           <Activity size={48} className="spinner-icon" />
-          <p>Cargando historial...</p>
+          <p>Tarix yuklanmoqda...</p>
         </div>
       </div>
     );
@@ -110,11 +110,11 @@ export default function PositionHistory() {
       <div className="history-header">
         <button className="back-btn" onClick={() => window.history.back()}>
           <ArrowLeft size={20} />
-          Volver
+          Orqaga
         </button>
         <h1 className="history-title">
           <Activity size={32} />
-          Historial de Posiciones
+          Pozitsiyalar tarixi
         </h1>
       </div>
 
@@ -125,7 +125,7 @@ export default function PositionHistory() {
             <Activity size={24} />
           </div>
           <div className="stat-content">
-            <div className="stat-label">Total de Operaciones</div>
+            <div className="stat-label">Operatsiyalar soni</div>
             <div className="stat-value">{stats.totalTrades}</div>
           </div>
         </div>
@@ -135,7 +135,7 @@ export default function PositionHistory() {
             <DollarSign size={24} />
           </div>
           <div className="stat-content">
-            <div className="stat-label">Ganancia Total</div>
+            <div className="stat-label">Umumiy foyda</div>
             <div className={`stat-value ${stats.totalProfit >= 0 ? 'profit' : 'loss'}`}>
               {stats.totalProfit >= 0 ? '+' : ''}${stats.totalProfit.toFixed(2)}
             </div>
@@ -147,7 +147,7 @@ export default function PositionHistory() {
             <Percent size={24} />
           </div>
           <div className="stat-content">
-            <div className="stat-label">Tasa de Éxito</div>
+            <div className="stat-label">Muvaffaqiyat darajasi</div>
             <div className="stat-value">{stats.winRate.toFixed(1)}%</div>
           </div>
         </div>
@@ -157,7 +157,7 @@ export default function PositionHistory() {
             <TrendingUp size={24} />
           </div>
           <div className="stat-content">
-            <div className="stat-label">Mejor Operación</div>
+            <div className="stat-label">Eng yaxshi operatsiya</div>
             <div className="stat-value profit">+${stats.bestTrade.toFixed(2)}</div>
           </div>
         </div>
@@ -169,19 +169,19 @@ export default function PositionHistory() {
           className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
           onClick={() => setFilter('all')}
         >
-          Todas
+          Barchasi
         </button>
         <button 
           className={`filter-btn ${filter === 'buy' ? 'active' : ''}`}
           onClick={() => setFilter('buy')}
         >
-          Comprar
+          Sotib oling
         </button>
         <button 
           className={`filter-btn ${filter === 'sell' ? 'active' : ''}`}
           onClick={() => setFilter('sell')}
         >
-          Vender
+          Sotish
         </button>
         <button 
           className={`filter-btn ${filter === 'ai' ? 'active' : ''}`}
@@ -196,8 +196,8 @@ export default function PositionHistory() {
         {filteredPositions.length === 0 ? (
           <div className="empty-state">
             <Activity size={64} className="empty-icon" />
-            <h3>No hay operaciones</h3>
-            <p>Aún no has realizado ninguna operación</p>
+            <h3>Operatsiyalar mavjud emas</h3>
+            <p>Siz hali hech qanday operatsiya bajarmagansiz</p>
           </div>
         ) : (
           filteredPositions.map((position, index) => {
@@ -219,7 +219,7 @@ export default function PositionHistory() {
 
                 <div className="position-details">
                   <div className="detail-row">
-                    <span className="detail-label">Monto:</span>
+                    <span className="detail-label">Miqdor:</span>
                     <span className="detail-value">${parseFloat(position.amount || 0).toFixed(2)}</span>
                   </div>
                   <div className="detail-row">
@@ -231,7 +231,7 @@ export default function PositionHistory() {
                   <div className="detail-row">
                     <span className="detail-label">
                       <Calendar size={14} />
-                      Fecha:
+                      Sana:
                     </span>
                     <span className="detail-value">{formatDate(position.created_at || Date.now())}</span>
                   </div>
