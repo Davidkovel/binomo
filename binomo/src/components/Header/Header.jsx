@@ -46,6 +46,13 @@ const Header = () => {
           },
         });
 
+        if (response.status === 401) {
+          // Токен недействителен или истёк
+          localStorage.removeItem('access_token');
+          navigate('/login');
+          return;
+        }
+
         if (!response.ok) {
           throw new Error("Ошибка при получении баланса");
         }

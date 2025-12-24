@@ -3,10 +3,13 @@ import React, { useState, useEffect } from 'react'; // Добавьте useEffec
 import { X, Upload, CreditCard } from "lucide-react";
 import "./PaymentModal.css";
 import { CONFIG_API_BASE_URL } from '../config/constants';
+import { useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 
 const API_BASE_URL = CONFIG_API_BASE_URL;
 
 export default function PaymentModal({ isOpen, onClose }) {
+  const Navigate = useNavigate();
   const [amount, setAmount] = useState("");
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -26,6 +29,14 @@ export default function PaymentModal({ isOpen, onClose }) {
           'Authorization': `Bearer ${token}`,
         },
       });
+
+      if (response.status === 401) {
+        // Токен недействителен или истёк
+        localStorage.removeItem('access_token');
+        onClose();
+        Navigate('/login');
+        return;
+      }
 
       if (response.ok) {
         const data = await response.json();
@@ -72,6 +83,14 @@ export default function PaymentModal({ isOpen, onClose }) {
         },
         body: formData
       });
+
+      if (response.status === 401) {
+        // Токен недействителен или истёк
+        localStorage.removeItem('access_token');
+        onClose();
+        Navigate('/login');
+        return;
+      }
 
       const data = await response.json();
 

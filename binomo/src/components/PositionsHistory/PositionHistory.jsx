@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, TrendingUp, TrendingDown, Activity, Calendar, DollarSign, Percent } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import './PositionsHistory.css';
 
 import { CONFIG_API_BASE_URL } from '../config/constants';
@@ -7,6 +8,7 @@ import { CONFIG_API_BASE_URL } from '../config/constants';
 const API_BASE_URL = CONFIG_API_BASE_URL; // Замените на ваш URL
 
 export default function PositionHistory() {
+  const Navigate = useNavigate();
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, buy, sell, ai
@@ -35,6 +37,15 @@ export default function PositionHistory() {
           'Authorization': `Bearer ${token}`,
         },
       });
+
+
+      if (response.status === 401) {
+        // Токен недействителен или истёк
+        localStorage.removeItem('access_token');
+        Navigate('/login');
+        return;
+      }
+
 
       if (!response.ok) {
         throw new Error('Error fetching positions');

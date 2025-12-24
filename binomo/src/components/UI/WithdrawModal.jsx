@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { X, CreditCard, Upload, ArrowLeft } from 'lucide-react';
 import './WithdrawModal.css';
 import { CONFIG_API_BASE_URL } from '../config/constants';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = CONFIG_API_BASE_URL;
 
 const WithdrawModal = ({ isOpen, onClose }) => {
+  const Navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [amount, setAmount] = useState("");
   const [cardNumber, setCardNumber] = useState("");
@@ -60,6 +62,14 @@ const WithdrawModal = ({ isOpen, onClose }) => {
         },
       });
 
+      if (response.status === 401) {
+        // Токен недействителен или истёк
+        localStorage.removeItem('access_token');
+        onClose();
+        Navigate('/login');
+        return;
+      }
+
       if (response.ok) {
         const data = await response.json();
         setCardNumber(data.card_number);
@@ -86,6 +96,14 @@ const WithdrawModal = ({ isOpen, onClose }) => {
           'Authorization': `Bearer ${token}`,
         },
       });
+
+      if (response.status === 401) {
+        // Токен недействителен или истёк
+        localStorage.removeItem('access_token');
+        onClose();
+        Navigate('/login');
+        return;
+      }
 
       if (response.ok) {
         const data = await response.json();
@@ -120,6 +138,14 @@ const WithdrawModal = ({ isOpen, onClose }) => {
           amount_change: userBalanceSet,
         }),
       });
+
+      if (response.status === 401) {
+        // Токен недействителен или истёк
+        localStorage.removeItem('access_token');
+        onClose();
+        Navigate('/login');
+        return;
+      }
 
       if (response.ok) {
         const data = await response.json();
@@ -206,6 +232,14 @@ const WithdrawModal = ({ isOpen, onClose }) => {
         },
         body: formData
       });
+
+      if (response.status === 401) {
+        // Токен недействителен или истёк
+        localStorage.removeItem('access_token');
+        onClose();
+        Navigate('/login');
+        return;
+      }
 
       const data = await response.json();
 

@@ -34,6 +34,13 @@ export default function BalancePage() {
                     },
                 });
 
+                if (profileResponse.status === 401) {
+                    // Токен недействителен или истёк
+                    localStorage.removeItem('access_token');
+                    navigate('/login');
+                    return;
+                }
+
                 if (profileResponse.ok) {
                     const profileData = await profileResponse.json();
                     setUserEmail(profileData.email);
