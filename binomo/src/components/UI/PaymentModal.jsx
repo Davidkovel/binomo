@@ -158,23 +158,21 @@ export default function PaymentModal({ isOpen, onClose }) {
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="500 000 UZS dan kiriting"
               className="amount-input2"
-              min="500000"
-              step="1000"
+              step="any"
               required
               disabled={loading}
             />
-            <div className="min-amount-hint">
+            {/*<div className="min-amount-hint">
               💰 Minimal summa: <strong>500 000 UZS</strong>
-            </div>
+            </div>*/}
             
-            {/* Валидация суммы */}
+            {/* Валидация суммы 
             {amount && Number(amount) < 500000 && (
               <div className="error-message">
                 ❌ Summa kamida 500 000 UZS bo‘lishi kerak
               </div>
-            )}
+            )}*/}
           </div>
 
           {/* Загрузка файла */}
@@ -201,7 +199,7 @@ export default function PaymentModal({ isOpen, onClose }) {
             <button 
               type="submit" 
               className="submit-button-payment"
-              disabled={loading || Number(amount) < 500000}
+              disabled={loading} //  || Number(amount) < 500000
             >
               {loading ? 'Yuborilmoqda...' : 'Men to‘ladim'}
             </button>
