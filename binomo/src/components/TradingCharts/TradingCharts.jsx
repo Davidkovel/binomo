@@ -318,12 +318,6 @@ export default function TradingPlatform() {
       return;
     }
 
-    console.log("Проверка баланса для AI трейдинга:", userBalance);
-    if (userBalance < 1000000) {
-      alert('Depósito mínimo para operar: 1,000,000 UZS.');
-      return;
-    }
-
     if (entries.length >= 1) {
       alert("❌ Bir vaqtning o'zida faqat bitta faol pozitsiya ushlab turilishi mumkin.");
       return;
