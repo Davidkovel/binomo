@@ -104,6 +104,14 @@ export default function PositionHistory() {
     });
   };
 
+  const formatMoney = (value) =>
+    value.toLocaleString('uz-UZ', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+  });
+
+
+
   if (loading) {
     return (
       <div className="history-container">
@@ -148,7 +156,7 @@ export default function PositionHistory() {
           <div className="stat-content">
             <div className="stat-label">Umumiy foyda</div>
             <div className={`stat-value ${stats.totalProfit >= 0 ? 'profit' : 'loss'}`}>
-              {stats.totalProfit >= 0 ? '+' : ''}UZS{stats.totalProfit.toFixed(2)}
+              {stats.totalProfit >= 0 ? '+' : ''}UZS {formatMoney(stats.totalProfit)}
             </div>
           </div>
         </div>
@@ -169,7 +177,7 @@ export default function PositionHistory() {
           </div>
           <div className="stat-content">
             <div className="stat-label">Eng yaxshi operatsiya</div>
-            <div className="stat-value profit">+UZS{stats.bestTrade.toFixed(2)}</div>
+            <div className="stat-value profit">+UZS {formatMoney(stats.bestTrade)}</div>
           </div>
         </div>
       </div>
@@ -224,7 +232,7 @@ export default function PositionHistory() {
                     <span className="type-label">{getTypeLabel(position.type)}</span>
                   </div>
                   <div className={`position-profit ${isProfit ? 'profit' : 'loss'}`}>
-                    {isProfit ? '+' : ''}UZS{profit.toFixed(2)}
+                    {isProfit ? '+' : ''}UZS {formatMoney(profit)}
                   </div>
                 </div>
 
