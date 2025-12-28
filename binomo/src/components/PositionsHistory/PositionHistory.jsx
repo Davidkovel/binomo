@@ -239,7 +239,7 @@ export default function PositionHistory() {
                 <div className="position-details">
                   <div className="detail-row">
                     <span className="detail-label">Miqdor:</span>
-                    <span className="detail-value">${parseFloat(position.amount || 0).toFixed(2)}</span>
+                    <span className="detail-value">UZS {parseFloat(position.amount || 0).toFixed(2)}</span>
                   </div>
                   <div className="detail-row">
                     <span className="detail-label">ROI:</span>
