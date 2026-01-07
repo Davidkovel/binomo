@@ -264,8 +264,8 @@ export default function TradingPlatform() {
   };
 
   const handleBuyClick = () => {
-    if (userBalance < 10000) {
-      alert('Savdo uchun minimal depozit: 10,000 UZS');
+    if (userBalance < 100000) {
+      alert('Savdo uchun minimal depozit: 100,000 UZS');
       return;
     }
 
@@ -363,8 +363,8 @@ export default function TradingPlatform() {
   };
 
   const handleSellClick = () => {
-    if (userBalance < 10000) {
-      alert('Savdo uchun minimal depozit: 10,000 UZS');
+    if (userBalance < 100000) {
+      alert('Savdo uchun minimal depozit: 100,000 UZS');
       return;
     }
 
