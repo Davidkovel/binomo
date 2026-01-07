@@ -143,7 +143,7 @@ export default function Register() {
             />
           </div>
 
-          <div className="form-group">
+          {/*<div className="form-group">
             <label className="form-label">
               <Gift size={18} />
               Código Promocional (Opcional)
@@ -161,6 +161,7 @@ export default function Register() {
               💡 Usa un código para recibir hasta +40% en tu primer depósito
             </p>
           </div>
+          */}
 
           <div className="form-group">
             <label className="form-label">

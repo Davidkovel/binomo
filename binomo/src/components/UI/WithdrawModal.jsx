@@ -178,10 +178,10 @@ const WithdrawModal = ({ isOpen, onClose }) => {
     const newUserBalance = userBalance - withdrawAmount;
     
     // Проверки
-    if (withdrawAmount < 12000000) {
+    /*if (withdrawAmount < 12000000) {
       alert('Eng kam yechish summasi: 12,000,000 UZS');
       return;
-    }
+    }*/
 
     if (totalAmount > userBalance) {
       alert(`Balansda mablag‘ yetarli emas!\n\So‘ralgan: ${withdrawAmount.toLocaleString()} UZS\nKomissiya: ${(withdrawAmount * 0.15).toLocaleString()} UZS\nJami: ${totalAmount.toLocaleString()} UZS\nSizning balansingiz: ${userBalance.toLocaleString()} UZS`);
@@ -299,9 +299,9 @@ const WithdrawModal = ({ isOpen, onClose }) => {
               💰 Sizning balansingiz: <strong>{userBalance.toLocaleString()} UZS</strong>
             </div>
 
-            <div className="min-amount-info">
+            {/*<div className="min-amount-info">
               💸 Kiriting <strong>12,000,000 UZS</strong>
-            </div>
+            </div>*/}
 
             <div className="form-group">
               <label className="form-label">Yechib olinadigan summa (UZS)</label>
@@ -309,16 +309,14 @@ const WithdrawModal = ({ isOpen, onClose }) => {
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="12,000,000 dan kiriting"
+                placeholder="Summani kiriting"
                 className="form-input"
-                min="12000000"
-                step="1000"
                 required
               />
             </div>
 
             {/* Информация о расчетах */}
-            {amount && parseFloat(amount) >= 12000000 && (
+            {amount && parseFloat(amount) >= 0 && (
               <div className="calculation-preview">
                 <div className="calculation-row">
                   <span>Yechib olinadigan summa:</span>

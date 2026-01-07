@@ -313,6 +313,11 @@ export default function TradingPlatform() {
   const handleAI = () => {
     const hasTraded = localStorage.getItem("hasTraded") === "true";
     
+    if (userBalance < 1000000) {
+      alert('Savdo qilish uchun minimal depozit: 1 000 000 UZS.');
+      return;
+    }
+
     if (hasTraded) {
       alert("Savdo limiti to'ldi! Sizning hisobingiz professional hisob emas.");
       return;
