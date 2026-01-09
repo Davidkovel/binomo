@@ -140,7 +140,7 @@ export default function BalancePage() {
             {/* Button history positions */}
             <button className="position-history-btn" onClick={handlePosition}>
                 <History size={20} />
-                <span>Historial de posiciones</span>
+                <span>Pozitsiya tarixi</span>
             </button>
         </div>
         </div>
