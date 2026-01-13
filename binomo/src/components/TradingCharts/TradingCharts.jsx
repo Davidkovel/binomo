@@ -749,7 +749,7 @@ export default function TradingPlatform() {
                     min="10"
                     max={userBalance}
                     step="10"
-                    disabled={!isA.uthenticated}
+                    disabled={!isAuthenticated}
                   />
                   <div className="balance-info">
                     Mavjud: {userBalance.toFixed(2)} UZS
