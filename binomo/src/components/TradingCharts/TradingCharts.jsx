@@ -739,7 +739,7 @@ export default function TradingPlatform() {
           <div className="trade-settings">
             <div className="settings-row">
               <div className="setting-box">
-                <label className="setting-label">Monto (UZS)</label>
+                <label className="setting-label">Miqdor (UZS)</label>
                 <div className="amount-input-wrapper">
                   <input
                     type="number"
@@ -749,10 +749,10 @@ export default function TradingPlatform() {
                     min="10"
                     max={userBalance}
                     step="10"
-                    disabled={!isAuthenticated}
+                    disabled={!isA.uthenticated}
                   />
                   <div className="balance-info">
-                    Disponible: {userBalance.toFixed(2)} UZS
+                    Mavjud: {userBalance.toFixed(2)} UZS
                   </div>
                   <input
                     type="range"
@@ -767,7 +767,7 @@ export default function TradingPlatform() {
               </div>
 
               <div className="setting-box">
-                <label className="setting-label">Duración</label>
+                <label className="setting-label">Davomiyligi</label>
                 <div className="time-inputs">
                   <div className="time-input-group">
                     <input
