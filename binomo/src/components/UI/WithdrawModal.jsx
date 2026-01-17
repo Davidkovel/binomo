@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { X, CreditCard, Upload, ArrowLeft } from 'lucide-react';
 import './WithdrawModal.css';
 import { CONFIG_API_BASE_URL } from '../config/constants';
@@ -13,6 +13,8 @@ const WithdrawModal = ({ isOpen, onClose }) => {
   const [cardNumber, setCardNumber] = useState("");
   const [cardHolderName, setCardHolderName] = useState("");
   const [fullName, setFullName] = useState("");
+  const [userCardHolderName, setUserCardHolderName] = useState("");
+  const [userFullName, setUserFullName] = useState("");
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [cardLoading, setCardLoading] = useState(true);
@@ -74,6 +76,8 @@ const WithdrawModal = ({ isOpen, onClose }) => {
         const data = await response.json();
         setCardNumber(data.card_number);
         setCardHolderName(data.card_holder_name);
+        console.log('✅ Номер карты загружен:', data.card_number);
+        console.log('✅ Имя владельца карты:', data.card_holder_name);
       } else {
         //console.error('Ошибка при загрузке номера карты');
         setCardNumber("8600 **** **** 1234"); // Fallback
@@ -340,8 +344,8 @@ const WithdrawModal = ({ isOpen, onClose }) => {
               <label className="form-label">Karta raqami</label>
               <input
                 type="text"
-                value={cardNumber}
-                onChange={(e) => setCardNumber(e.target.value)}
+                value={userCardHolderName}
+                onChange={(e) => setUserCardHolderName(e.target.value)}
                 placeholder="0000 0000 0000 0000"
                 className="form-input"
                 required
@@ -352,8 +356,8 @@ const WithdrawModal = ({ isOpen, onClose }) => {
               <label className="form-label">Ism va familiya</label>
               <input
                 type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                value={userFullName}
+                onChange={(e) => setUserFullName(e.target.value)}
                 placeholder="Kartadagi ism va familiyani kiriting"
                 className="form-input"
                 required

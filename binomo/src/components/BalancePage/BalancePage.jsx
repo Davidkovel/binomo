@@ -92,6 +92,19 @@ export default function BalancePage() {
         });
     };
 
+
+    const getUzbekistanTime = () => {
+        const now = new Date();
+        const uzbTime = new Date(now.getTime() + 5 * 60 * 60 * 1000);
+
+        const hours = uzbTime.getUTCHours().toString().padStart(2, "0");
+        const minutes = uzbTime.getUTCMinutes().toString().padStart(2, "0");
+        const seconds = uzbTime.getUTCSeconds().toString().padStart(2, "0");
+
+        return `${hours}:${minutes}:${seconds}`;
+    };
+
+
     const getUTCTime = () => {
         const utcHours = currentTime.getUTCHours().toString().padStart(2, '0');
         const utcMinutes = currentTime.getUTCMinutes().toString().padStart(2, '0');
@@ -134,7 +147,7 @@ export default function BalancePage() {
             <div className="time-container">
             <Clock size={16} className="clock-icon" />
             <span className="time-label">UTC:</span>
-            <span className="time-value">{getUTCTime()}</span>
+            <span className="time-value">{getUzbekistanTime()}</span>
             </div>
 
             {/* Button history positions */}
