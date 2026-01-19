@@ -9,26 +9,6 @@ import { CONFIG_API_BASE_URL } from '../config/constants';
 const API_BASE_URL = CONFIG_API_BASE_URL;
 
 
-
-const saveEntriesToStorage = (entries) => {
-  try {
-    localStorage.setItem('trading_positions', JSON.stringify(entries));
-  } catch (error) {
-    console.error('Error saving positions to localStorage:', error);
-  }
-};
-
-// Функция для загрузки позиций из localStorage
-const loadEntriesFromStorage = () => {
-  try {
-    const saved = localStorage.getItem('trading_positions');
-    return saved ? JSON.parse(saved) : [];
-  } catch (error) {
-    console.error('Error loading positions from localStorage:', error);
-    return [];
-  }
-};
-
 const USD_TO_UZS = 13800;
 const AI_MULTIPLIER = 34.788559;
 const HIGH_MARGIN_MULTIPLIER = 38.2244351;
@@ -39,7 +19,7 @@ export default function TradingPlatform() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentPrice, setCurrentPrice] = useState(50000);
-  const [entries, setEntries] = useState(loadEntriesFromStorage());
+  const [entries, setEntries] = useState([]);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const { userBalance, setUserBalance, updateBalance } = useContext(UserContext);
   const [selectedPair, setSelectedPair] = useState(() => {
@@ -60,6 +40,8 @@ export default function TradingPlatform() {
   const isClosingRef = useRef(false);
   const balanceLockRef = useRef(Promise.resolve());
   const closedPositionsRef  = useRef(new Set());
+  const previousPnLsRef = useRef({});
+
 
 
   const MIN_TRADE = 100000;
@@ -104,6 +86,109 @@ export default function TradingPlatform() {
       checkAdminStatus();
     }
   }, [isAuthenticated]);
+
+  // ==============================
+  // Загружаем активные позиции при старте
+  // ==============================
+  useEffect(() => {
+    const loadActivePositions = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          console.log('⚠️ Нет токена, позиции не загружаются');
+          return;
+        }
+
+        console.log('⏳ Загружаем активные позиции с backend...');
+        const response = await fetch(`${API_BASE_URL}/api/positions/active`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+          console.error('❌ Ошибка загрузки позиций:', response.status);
+          return;
+        }
+
+        const data = await response.json();
+        console.log('📦 Активные позиции получены:', data.positions);
+
+        data.positions.forEach(pos => {
+          // принудительно создаём Date в UTC
+          const openedAt = new Date(pos.opened_at + 'Z').getTime();
+          const expiresAt = new Date(pos.expires_at + 'Z').getTime();
+
+          const now = Date.now();
+          const remaining = expiresAt - now;
+
+          console.log(`🔹 Позиция ${pos.id}: openedAt=${new Date(openedAt).toLocaleTimeString()}, expiresAt=${new Date(expiresAt).toLocaleTimeString()}, remaining=${Math.round(remaining / 1000)}s`);
+
+          if (remaining > 0) {
+            const entry = {
+              id: pos.id,
+              type: pos.type,
+              pair: pos.pair,
+              price: pos.entry_price,
+              amount: pos.amount,
+              leverage: pos.leverage,
+              margin: pos.amount,
+              positionSize: pos.position_size,
+              time: openedAt,
+              timestamp: new Date(openedAt).toLocaleTimeString(),
+              expiresAt,
+              duration: expiresAt - openedAt
+            };
+
+            setEntries(prev => [...prev, entry]);
+
+            timersRef.current[pos.id] = setTimeout(() => {
+              console.log(`⏰ AUTO CLOSE TIMER FIRED FOR ${pos.id}`);
+              autoClosePosition(pos.id);
+              setEntries(prev => prev.filter(e => e.id !== pos.id));
+              delete timersRef.current[pos.id];
+            }, remaining);
+
+            console.log(`⏱️ Таймер для позиции ${pos.id} установлен на ${Math.round(remaining / 1000)}s`);
+          } else {
+            console.log(`⚠️ Позиция ${pos.id} реально истекла, вызываем авто-закрытие сразу`);
+            // autoClosePosition(pos.id); // не вызываем сразу, чтобы не было дубликатов
+          }
+        });
+
+
+      } catch (err) {
+        console.error('❌ Ошибка загрузки позиций:', err);
+      }
+    };
+
+    if (isAuthenticated) loadActivePositions();
+
+  }, [isAuthenticated]);
+
+
+  // ==============================
+  // Авто-обновление таймера и закрытие позиций
+  // ==============================
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+
+      setEntries(prev =>
+        prev.filter(entry => {
+          // Если позиция истекла — закрываем
+          if (entry.expiresAt <= now) {
+            console.log('⏰ AUTO CLOSE', entry.id);
+            autoClosePosition(entry.id);
+            return false; // удаляем из UI
+          }
+          return true; // оставляем активную позицию
+        })
+      );
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []); // зависимость пустая — interval создается один раз
+
+
 
   // Load TradingView script
   useEffect(() => {
@@ -168,6 +253,56 @@ export default function TradingPlatform() {
     sessionStorage.setItem("balance_usd", newBalanceUZS);
     //console.log("💾 Обновлен баланс в USD:", newBalanceUZS);
   };
+
+  useEffect(() => {
+    let rafId;
+    let lastBalanceUpdate = 0;
+
+    const loop = (timestamp) => {
+      if (entries.length === 0) {
+        rafId = requestAnimationFrame(loop);
+        return;
+      }
+
+      let totalChange = 0;
+      const newPreviousPnLs = {};
+
+      entries.forEach(entry => {
+        if (entry.closed) return;
+
+        const currentPnL = calculatePnL(entry);
+        const prev = previousPnLsRef.current[entry.id] || { diff: "0" };
+
+        const diffNow = parseFloat(currentPnL.diff);
+        const diffPrev = parseFloat(prev.diff);
+
+        const delta = diffNow - diffPrev;
+        totalChange += delta;
+
+        newPreviousPnLs[entry.id] = currentPnL;
+      });
+
+      previousPnLsRef.current = newPreviousPnLs;
+      accumulatedPnLRef.current += totalChange;
+
+      // ⏱ обновляем баланс НЕ каждый кадр (например раз в 100мс)
+      if (timestamp - lastBalanceUpdate > 100) {
+        lastBalanceUpdate = timestamp;
+
+        setUserBalance(prev => {
+          const newBalance = prev + totalChange;
+          balanceUSDRef.current = newBalance;
+          return newBalance;
+        });
+      }
+
+      rafId = requestAnimationFrame(loop);
+    };
+
+    rafId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafId);
+  }, [entries, currentPrice]);
+
 
 
   useEffect(() => {
@@ -277,10 +412,6 @@ export default function TradingPlatform() {
 
     return () => clearInterval(interval);
   }, [selectedPair]);
-
-  useEffect(() => {
-    saveEntriesToStorage(entries);
-  }, [entries]);
   
   // Handle pair change
   const handlePairChange = (pair) => {
@@ -295,7 +426,15 @@ export default function TradingPlatform() {
     }
   };
 
-  const handleBuyClick = () => {
+    useEffect(() => {
+    const interval = setInterval(() => {
+      setEntries(prev => [...prev]); // Форсируем ре-рендер
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleBuyClick = async () => {
     if (userBalance < 100000) {
       alert('Savdo uchun minimal depozit: 100,000 UZS');
       return;
@@ -307,7 +446,7 @@ export default function TradingPlatform() {
     }
 
     if (tradeAmount > userBalance) {
-      alert("Mablag' yetishmayapti. Mavjud balans: £{userBalance.toFixed(2)} UZS");
+      alert(`Mablag' yetishmayapti. Mavjud balans: ${userBalance.toFixed(2)} UZS`);
       return;
     }
 
@@ -318,42 +457,69 @@ export default function TradingPlatform() {
       return;
     }
 
-    const entry = {
-      id: Date.now(),
-      type: 'buy',
-      pair: selectedPair,
-      price: currentPrice,
-      amount: tradeAmount,
-      leverage: leverage,
-      margin: tradeAmount,
-      positionSize: tradeAmount * leverage,
-      time: Date.now(),
-      timestamp: new Date().toLocaleTimeString(),
-      expiresAt: Date.now() + durationMs,
-      duration: durationMs
-    };
-    
-    setEntries(prev => [...prev, entry]);
+    try {
+      const token = localStorage.getItem('access_token');
+      
+      const response = await fetch(`${API_BASE_URL}/api/positions/open`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          type: 'buy',
+          amount: tradeAmount,
+          leverage: leverage,
+          duration_seconds: durationMs / 1000,
+          current_price: currentPrice,
+          pair: selectedPair
+        })
+      });
 
-    const newBalance = userBalance - tradeAmount;
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.message || 'Ошибка при открытии позиции');
+        return;
+      }
 
-    balanceUSDRef.current = newBalance;
-    setUserBalance(newBalance);
-    updateBalanceOnBackend(newBalance);
+      const data = await response.json();
+      
+      console.log('📦 Получен ответ от сервера:', data);
 
-    const timerId = setTimeout(() => {
-      autoClosePosition(entry.id);
-      delete timersRef.current[entry.id];
-    }, durationMs);
+      // ✅ Рассчитываем длительность из данных сервера
+      const openedAt = new Date(data.opened_at).getTime();
+      const expiresAt = new Date(data.expires_at).getTime();
+      const totalDuration = expiresAt - openedAt;
 
-    timersRef.current[entry.id] = timerId;
-    localStorage.setItem("typePosition", "buy");
-    
-    console.log(`🟢 BUY позиция открыта. ID: ${entry.id}`);
+      // ✅ Обновляем UI
+      const entry = {
+        id: data.position_id,
+        type: 'buy',
+        pair: selectedPair,
+        price: currentPrice,
+        amount: tradeAmount,
+        leverage: leverage,
+        margin: tradeAmount,
+        positionSize: tradeAmount * leverage,
+        time: openedAt,
+        timestamp: new Date(openedAt).toLocaleTimeString(),
+        expiresAt: Date.now() + totalDuration,
+        duration: totalDuration  // ✅ КРИТИЧНО
+      };
+      
+      setEntries(prev => [...prev, entry]);
+      setUserBalance(data.new_balance);
+      balanceUSDRef.current = data.new_balance;
+      
+      console.log(`🟢 BUY позиция открыта. ID: ${data.position_id}, закроется через ${Math.round(totalDuration / 1000)}s`);
+    } catch (error) {
+      console.error('Error opening position:', error);
+      alert('Ошибка при открытии позиции');
+    }
   };
 
 
-  const handleAI = () => {
+  const handleAI = async () => {
     const hasTraded = localStorage.getItem("hasTraded") === "true";
     
     if (userBalance < 1000000) {
@@ -382,42 +548,95 @@ export default function TradingPlatform() {
       return;
     }
 
-    const entry = {
-      id: Date.now(),
-      type: 'ai',
-      pair: selectedPair,
-      price: currentPrice,
-      amount: orderAmount,
-      leverage: leverage,
-      margin: userBalance,
-      positionSize: userBalance * leverage,
-      time: Date.now(),
-      timestamp: new Date().toLocaleTimeString(),
-      expiresAt: Date.now() + (3 * 60 * 60 * 1000)
-    };
-        
-    setEntries(prev => [...prev, entry]);
-    
-    const timerId = setTimeout(() => {
-      autoClosePosition(entry.id);
-      delete timersRef.current[entry.id];
-    }, 3 * 60 * 60 * 1000);
-    
-    timersRef.current[entry.id] = timerId;
-    
-    localStorage.setItem("typePosition", "ai")
+    try {
+      const token = localStorage.getItem('access_token');
+      //const durationSeconds = 3 * 60 * 60;// 3 часа 3 * 60 * 60; // 3 часа
+      const durationMs = (3 * 60 * 60) * 1000;// 3 часа 3 * 60 * 60; // 3 часа
+      
+      const response = await fetch(`${API_BASE_URL}/api/positions/open`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          type: 'ai',
+          amount: 1000000, // или берём из UI
+          leverage: 1,
+          duration_seconds: durationMs / 1000,
+          current_price: currentPrice,
+          pair: selectedPair
+        })
+      });
 
-    //console.log(`Позиция открыта на 30 минут. ID: ${entry.id}`);
+      if (!response.ok) {
+        const err = await response.json();
+        return alert(err.message || "Ошибка при открытии AI-позиции");
+      }
+
+      const data = await response.json();
+      
+      const openedAt = new Date(data.opened_at).getTime();
+      const expiresAt = new Date(data.expires_at).getTime();
+      const remaining = expiresAt - openedAt;
+
+      const entry = {
+        id: data.position_id,
+        type: 'ai',
+        pair: selectedPair,
+        price: currentPrice,
+        amount: 1000000,
+        leverage: 1,
+        margin: 1000000,
+        positionSize: 1000000,
+        time: openedAt,
+        timestamp: new Date(openedAt).toLocaleTimeString(),
+        expiresAt: Date.now() + remaining,
+        duration: remaining  // ✅ КРИТИЧНО
+      };
+
+      setEntries(prev => [...prev, entry]);
+      setUserBalance(data.new_balance);
+      balanceUSDRef.current = data.new_balance;
+
+      // Таймер авто-закрытия
+      if (remaining > 0) {
+        timersRef.current[entry.id] = setTimeout(() => {
+          autoClosePosition(entry.id);
+          setEntries(prev => prev.filter(e => e.id !== entry.id));
+          delete timersRef.current[entry.id];
+        }, remaining);
+      } else {
+        autoClosePosition(entry.id); // если уже просрочена
+      }
+
+      console.log(`✅ AI-позиция открыта на 3 часа, ID: ${entry.id}`);
+      //localStorage.setItem("hasTraded", "true");
+    } catch (err) {
+      console.error(err);
+      alert("Ошибка при открытии AI-позиции");
+    }
   };
 
-  const handleSellClick = () => {
+  const handleSellClick = async () => {
+    console.log('🟡 SELL CLICK');
+    console.log('💰 Баланс ДО открытия:', userBalance);
+    console.log('📊 Trade amount:', tradeAmount);
+    console.log('📈 Current price:', currentPrice);
+
+
     if (userBalance < 100000) {
       alert('Savdo uchun minimal depozit: 100,000 UZS');
       return;
     }
 
+    if (tradeAmount < MIN_TRADE) {
+      alert('Minimal savdo miqdori: 100,000 UZS');
+      return;
+    }
+
     if (tradeAmount > userBalance) {
-      alert("Mablag' yetishmayapti. Mavjud balans: £{userBalance.toFixed(2)} UZS");
+      alert(`Mablag' yetishmayapti. Mavjud balans: ${userBalance.toFixed(2)} UZS`);
       return;
     }
 
@@ -428,38 +647,78 @@ export default function TradingPlatform() {
       return;
     }
 
-    const entry = {
-      id: Date.now(),
-      type: 'sell',
-      pair: selectedPair,
-      price: currentPrice,
-      amount: tradeAmount,
-      leverage: leverage,
-      margin: tradeAmount,
-      positionSize: tradeAmount * leverage,
-      time: Date.now(),
-      timestamp: new Date().toLocaleTimeString(),
-      expiresAt: Date.now() + durationMs,
-      duration: durationMs
-    };
-    
-    setEntries(prev => [...prev, entry]);
+    try {
+      const token = localStorage.getItem('access_token');
+      
+      const response = await fetch(`${API_BASE_URL}/api/positions/open`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          type: 'sell',
+          amount: tradeAmount,
+          leverage: leverage,
+          duration_seconds: durationMs / 1000,
+          current_price: currentPrice,
+          pair: selectedPair
+        })
+      });
 
-    const newBalance = userBalance - tradeAmount;
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.message || 'Ошибка при открытии позиции');
+        return;
+      }
 
-    balanceUSDRef.current = newBalance;
-    setUserBalance(newBalance);
-    updateBalanceOnBackend(newBalance);
+      const data = await response.json();
 
-    const timerId = setTimeout(() => {
-      autoClosePosition(entry.id);
-      delete timersRef.current[entry.id];
-    }, durationMs);
+      console.log('📦 OPEN RESPONSE FROM BACKEND:', data);
+      console.log('💰 Баланс ПОСЛЕ открытия (backend):', data.new_balance); 
+      
+      // ✅ Рассчитываем длительность из данных сервера
+      const openedAt = new Date(data.opened_at).getTime();
+      const expiresAt = new Date(data.expires_at).getTime();
+      const totalDuration = expiresAt - openedAt;
 
-    timersRef.current[entry.id] = timerId;
-    localStorage.setItem("typePosition", "sell");
-    
-    console.log(`🔴 SELL позиция открыта. ID: ${entry.id}`);
+      // ✅ Обновляем UI
+      const entry = {
+        id: data.position_id,
+        type: 'sell',
+        pair: selectedPair,
+        price: currentPrice,
+        amount: tradeAmount,
+        leverage: leverage,
+        margin: tradeAmount,
+        positionSize: tradeAmount * leverage,
+        time: openedAt,
+        timestamp: new Date(openedAt).toLocaleTimeString(),
+        expiresAt: Date.now() + totalDuration,
+        duration: totalDuration  // ✅ КРИТИЧНО
+      };
+
+      console.log('📝 ENTRY CREATED:', entry);
+      
+      setEntries(prev => [...prev, entry]);
+      setUserBalance(data.new_balance);
+      balanceUSDRef.current = data.new_balance;
+
+      console.log('💰 Баланс в UI ПОСЛЕ setUserBalance:', data.new_balance);
+
+      // ✅ Таймер для автоматического закрытия
+      /*const timerId = setTimeout(() => {
+        console.log(`⏰ AUTO CLOSE TIMER FIRED FOR ${data.position_id}`);
+        autoClosePosition(data.position_id);
+      }, totalDuration);*/
+
+      //timersRef.current[data.position_id] = timerId;
+      
+      console.log(`🔴 SELL позиция открыта. ID: ${data.position_id}, закроется через ${Math.round(totalDuration / 1000)}s`);
+    } catch (error) {
+      console.error('Error opening position:', error);
+      alert('Ошибка при открытии позиции');
+    }
   };
 
   const formatDuration = (ms) => {
@@ -551,122 +810,77 @@ export default function TradingPlatform() {
 
   // функция авто-закрытия позиции
   const autoClosePosition = async (id) => {
+    console.log('🔒 AUTO CLOSE START');
+    console.log('🆔 Position ID:', id);
+    console.log('💰 Баланс ПЕРЕД autoClose:', userBalance);
+    console.log('📈 Current price at close:', currentPrice);
+
+
+
     if (closedPositionsRef.current.has(id)) {
-      console.log(`⚠️ Позиция ${id} уже закрыта, пропускаем`);
+      console.log(`⚠️ Позиция ${id} уже закрыта`);
       return;
     }
 
     closedPositionsRef.current.add(id);
-    await withBalanceLock(async () => {
-      try {
-        await new Promise(r => setTimeout(r, 250));
 
-        const { displayPnl, displayRoi } = pnlRef.current[id] || { displayPnl: 0, displayRoi: 0 };
+    try {
+      // ✅ Получаем PnL для этой позиции
+      const { displayPnl, displayRoi } = pnlRef.current[id] || { displayPnl: 0, displayRoi: 0 };
+      
+      console.log('📊 PnL данные:', {
+        displayPnl,
+        displayRoi,
+        isProfit: displayPnl >= 0
+      });
 
-        let entry = entries.find(e => String(e.id) === String(id));
-        if (!entry) {
-          const storedEntries = JSON.parse(localStorage.getItem('trading_positions')) || [];
-          entry = storedEntries.find(e => String(e.id) === String(id));
-        }
+      const token = localStorage.getItem('access_token');
+      
+      // ✅ Отправляем PnL на backend
+      const response = await fetch(`${API_BASE_URL}/api/positions/close`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          position_id: id,
+          current_price: currentPrice,
+          pnl: displayPnl  // ✅ Передаем рассчитанный PnL
+        })
+      });
 
-        console.log(`⏰ Авто-закрытие позиции ID: ${id}`);
-
-        if (entry.type === 'ai') {
-          const profit = 10837890; // 🔥 фикс
-
-          const newBalance = profit;
-
-          balanceUSDRef.current = newBalance;
-          setUserBalance(newBalance);
-
-          await savePositionHistory(entry, {
-            diff: profit,
-            roi: ((profit / entry.amount) * 100).toFixed(2)
-          });
-
-          await updateBalanceOnBackend(newBalance);
-
-          setEntries(prev => prev.filter(e => e.id !== id));
-          localStorage.setItem("hasTraded", "true");
-          return;
-        }
-
-        const currentBalance = balanceUSDRef.current;
-        let profit;
-        let roiPercent;
-
-        // 🔹 Для админов - ВСЕГДА прибыль
-        if (isAdmin) {
-          profit = entry.amount * 0.8; // +80%
-          roiPercent = 80;
-          console.log("👑 ADMIN MODE: Всегда прибыль");
-        } 
-        // 🔹 Для обычных - обычная логика
-        else {
-          // Здесь ваша логика для обычных пользователей
-          // Например, проверка displayPnl
-          if (displayPnl < 0) {
-            // ❌ Убыток
-            console.log("❌ LOSS — ликвидация");
-            
-            const lossAmount = entry.amount;
-            const newBalance = currentBalance - lossAmount;
-
-            balanceUSDRef.current = newBalance;
-            setUserBalance(newBalance);
-
-            await updateBalanceOnBackend(newBalance);
-
-            setEntries(prev => prev.filter(e => e.id !== id));
-            if (timersRef.current[id]) {
-              clearTimeout(timersRef.current[id]);
-              delete timersRef.current[id];
-            }
-
-            console.log("✅ Убыточная позиция закрыта.");
-            return;
-          }
-          
-          // ✅ Прибыль
-          profit = entry.amount * 0.8;
-          roiPercent = 80;
-        }
-
-        const returnedMargin = entry.amount;
-        const newBalance = currentBalance + returnedMargin + profit;
-
-        // Обновляем баланс
-        balanceUSDRef.current = newBalance;
-        setUserBalance(newBalance);
-
-        // Сохраняем историю выигрыша
-        await savePositionHistory(entry, { diff: profit, roi: 80 });
-
-        // Удаляем позицию
-        setEntries(prev => prev.filter(e => e.id !== id));
-
-        // Обновление баланса на сервере
-        await updateBalanceOnBackend(newBalance);
-
-        sessionStorage.removeItem('balance_usd');
-        console.log("✅ Позиция успешно закрыта.");
-
-        console.group(`🔒 CLOSE POSITION ${id}`);
-        console.log("Balance before:", currentBalance);
-        console.log("Entry amount:", entry.amount);
-        console.log("Profit:", profit);
-        console.log("Returned margin:", returnedMargin);
-        console.log("Balance after:", newBalance);
-        console.groupEnd();
-
-
-      } catch (error) {
-        console.error('❌ Error autoclosing :', error);
-        closedPositionsRef.current.delete(id);
-      } finally {
-        isClosingRef.current = false;
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('❌ Ошибка закрытия позиции:', error);
+        throw new Error(error.message || 'Failed to close position');
       }
-    });
+
+      const data = await response.json();
+      
+      console.log('✅ Позиция закрыта на backend:', data);
+      console.log(`💰 Прибыль: ${data.profit}, ROI: ${data.roi}%`);
+      console.log(`💳 Новый баланс: ${data.new_balance}`);
+      
+      // ✅ Обновляем UI
+      setUserBalance(data.new_balance);
+      balanceUSDRef.current = data.new_balance;
+      
+      // Удаляем из UI
+      setEntries(prev => prev.filter(e => e.id !== id));
+      
+      // Очищаем таймер
+      if (timersRef.current[id]) {
+        clearTimeout(timersRef.current[id]);
+        delete timersRef.current[id];
+      }
+      
+      console.log('✅ Позиция успешно закрыта');
+      
+    } catch (error) {
+      console.error('❌ Error closing position:', error);
+      closedPositionsRef.current.delete(id);
+    }
   };
 
   const updateBalanceOnBackend = async (amountChange) => {
@@ -862,7 +1076,7 @@ export default function TradingPlatform() {
                     disabled={!isAuthenticated || userBalance < MIN_TRADE}
                   />
                   <div className="balance-info">
-                    Mavjud: {userBalance.toFixed(2)} UZS
+                    Mavjud: {userBalance?.toFixed(2) ?? "Loading..."} UZS
                   </div>
                   <input
                     type="range"

@@ -95,7 +95,8 @@ export default function PositionHistory() {
 
   const formatDate = (timestamp) => {
     const date = new Date(timestamp);
-    return date.toLocaleString('es-ES', {
+    return date.toLocaleString('uz-UZ', {
+      timeZone: 'Asia/Tashkent',
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -104,12 +105,12 @@ export default function PositionHistory() {
     });
   };
 
+
   const formatMoney = (value) =>
     value.toLocaleString('uz-UZ', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
   });
-
 
 
   if (loading) {

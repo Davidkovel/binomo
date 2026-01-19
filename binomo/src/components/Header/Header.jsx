@@ -124,10 +124,10 @@ const Header = () => {
               {/* Зеленый баланс в UZS с зеленым текстом */}
               <div className="balance-container">
                 <div className="balance-amount green-text">
-                  {userBalance.toLocaleString('ru-RU', { 
-                    minimumFractionDigits: 2, 
-                    maximumFractionDigits: 2 
-                  })} UZS
+                  {userBalance?.toLocaleString('ru-RU', { 
+                      minimumFractionDigits: 2, 
+                      maximumFractionDigits: 2 
+                    }) ?? 'Loading...'} UZS
                 </div>
                 <div className="balance-label green-text">HAQIQLI BALANS</div>
               </div>

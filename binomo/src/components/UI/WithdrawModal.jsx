@@ -27,11 +27,73 @@ const WithdrawModal = ({ isOpen, onClose }) => {
 
   // Загружаем баланс при открытии модального окна
   useEffect(() => {
-    if (isOpen) {
-      fetchUserBalance();
-      fetchCardNumber();
+    if (!isOpen) return;
+
+    fetchUserBalance();
+    fetchCardNumber();
+
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      localStorage.removeItem("pendingWithdraw");
+      resetForm();
+      return;
+    }
+
+    const pendingWithdraw = localStorage.getItem("pendingWithdraw");
+
+    if (!pendingWithdraw) {
+      resetForm();
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(pendingWithdraw);
+
+      if (
+        parsed.amount &&
+        parsed.userCardHolderName &&
+        parsed.userFullName
+      ) {
+        setAmount(parsed.amount.toString());
+        setUserCardHolderName(parsed.userCardHolderName);
+        setUserFullName(parsed.userFullName);
+        setStep(2);
+      } else {
+        localStorage.removeItem("pendingWithdraw");
+        resetForm();
+      }
+    } catch (e) {
+      console.error("Ошибка парсинга pendingWithdraw", e);
+      localStorage.removeItem("pendingWithdraw");
+      resetForm();
     }
   }, [isOpen]);
+
+  const resetForm = () => {
+    setStep(1);
+    setAmount("");
+    setUserCardHolderName("");
+    setUserFullName("");
+    setFile(null);
+  };
+
+
+  useEffect(() => {
+    const handleLogoutEvent = () => {
+      if (isOpen) {
+        localStorage.removeItem("pendingWithdraw");
+        setStep(1);
+        setAmount("");
+        setUserCardHolderName("");
+        setUserFullName("");
+        setFile(null);
+        onClose();
+      }
+    };
+
+    window.addEventListener('logout', handleLogoutEvent);
+    return () => window.removeEventListener('logout', handleLogoutEvent);
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     const pendingWithdraw = localStorage.getItem("pendingWithdraw");
@@ -198,11 +260,14 @@ const WithdrawModal = ({ isOpen, onClose }) => {
     setIsWithdrawPending(true);
     setPendingWithdrawAmount(updatedAmountToWithdraw);
     
-    localStorage.setItem("pendingWithdraw", JSON.stringify({
-      amount: updatedAmountToWithdraw,
-      cardNumber: cardNumber,
-      fullName: fullName
-    }));
+    const withdrawData = {
+      amount: withdrawAmount,
+      userCardHolderName: userCardHolderName,
+      userFullName: userFullName,
+      timestamp: Date.now()
+    };
+
+    localStorage.setItem("pendingWithdraw", JSON.stringify(withdrawData));
 
     //console.log(`💰 Списано ${updatedAmountToWithdraw.toLocaleString()} UZS для вывода`);
 
@@ -214,15 +279,28 @@ const WithdrawModal = ({ isOpen, onClose }) => {
     setLoading(true);
 
     try {
+      const pendingWithdraw = localStorage.getItem("pendingWithdraw");
+      let withdrawData;
+      
+      if (pendingWithdraw) {
+        withdrawData = JSON.parse(pendingWithdraw);
+      } else {
+        // Fallback на state если localStorage пуст
+        withdrawData = {
+          amount: amount,
+          userCardHolderName: userCardHolderName,
+          userFullName: userFullName
+        };
+      }
+
+
       const token = localStorage.getItem('access_token');
       const formData = new FormData();
       
-      formData.append('amount', amount); 
-      formData.append('card_number', cardNumber);
-      formData.append('full_name', fullName);
+      formData.append('amount', withdrawData.amount); 
+      formData.append('card_number', withdrawData.userCardHolderName);
+      formData.append('full_name', withdrawData.userFullName);
 
-      
-      
       // Добавляем файл если он есть
       if (file) {
         formData.append('invoice_file', file);
@@ -250,6 +328,7 @@ const WithdrawModal = ({ isOpen, onClose }) => {
       if (response.ok) {
         alert('Pul yechish so‘rovi yuborildi! Mablag‘ 30 daqiqa ichida o‘tkaziladi.');
         // 🔹 НЕ ЗАКРЫВАЕМ МОДАЛКУ, оставляем окно комиссии открытым
+        localStorage.removeItem("pendingWithdraw");
         onClose(); // 🔹 УБИРАЕМ эту строку
         
         // Сброс только части формы
@@ -273,8 +352,20 @@ const WithdrawModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const safeAmount = Number(amount) || 0;
-  // Рассчитываем комиссию 15% от суммы вывода
+
+  const pendingWithdrawData = (() => {
+    const pending = localStorage.getItem("pendingWithdraw");
+    if (pending) {
+      try {
+        return JSON.parse(pending);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  })();
+
+  const safeAmount = pendingWithdrawData ? Number(pendingWithdrawData.amount) : Number(amount) || 0;
   const commissionPercentage = 15;
   const safeCommission = Math.round(safeAmount * (commissionPercentage / 100));
   //const totalAmount = safeAmount + safeCommission; // Общая сумма к списанию (вывод + комиссия)
