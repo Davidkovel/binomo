@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, TrendingUp, TrendingDown, Activity, Calendar, DollarSign, Percent } from 'lucide-react';
+import { DateTime } from 'luxon';
 import { useNavigate } from 'react-router-dom';
 import './PositionsHistory.css';
 
@@ -95,32 +96,15 @@ export default function PositionHistory() {
 
   const formatDate = (timestamp) => {
     if (!timestamp) return '—';
+    console.log('Formatting timestamp:', timestamp);
 
-    let dateUTC;
+    const time = DateTime.fromISO(timestamp) // <-- убрали { zone: 'utc' }
+                        .setZone('Asia/Tashkent')
+                        .toFormat('dd/LL/yyyy, HH:mm');
 
-    // Если это старая строка без Z, считаем как UTC
-    if (typeof timestamp === 'string' && !timestamp.includes('Z')) {
-      const [datePart, timePart] = timestamp.split('T');
-      const [year, month, day] = datePart.split('-').map(Number);
-      const [hour, minute, second] = timePart.split(':');
-      dateUTC = new Date(Date.UTC(year, month - 1, day, Number(hour), Number(minute), Math.floor(Number(second))));
-    } else {
-      dateUTC = new Date(timestamp);
-    }
-
-    return dateUTC.toLocaleString('uz-UZ', {
-      timeZone: 'Asia/Tashkent',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    console.log('Formatted time:', time);
+    return time;
   };
-
-
-
-
 
 
   const formatDateUzs = (timestamp) => {
