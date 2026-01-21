@@ -94,7 +94,15 @@ export default function PositionHistory() {
   };
 
   const formatDate = (timestamp) => {
-    const date = new Date(timestamp);
+    if (!timestamp) return '—';
+
+    const normalized =
+      typeof timestamp === 'string' && !timestamp.includes('Z')
+        ? timestamp + 'Z'
+        : timestamp;
+
+    const date = new Date(normalized);
+
     return date.toLocaleString('uz-UZ', {
       timeZone: 'Asia/Tashkent',
       day: '2-digit',
@@ -104,6 +112,7 @@ export default function PositionHistory() {
       minute: '2-digit'
     });
   };
+
 
   const formatDateUzs = (timestamp) => {
     if (!timestamp) return '—';
@@ -271,7 +280,7 @@ export default function PositionHistory() {
                       <Calendar size={14} />
                       Sana:
                     </span>
-                    <span className="detail-value">{formatDateUzs(position.created_at)}</span>
+                    <span className="detail-value">{formatDate(position.created_at)}</span>
                   </div>
                 </div>
               </div>
