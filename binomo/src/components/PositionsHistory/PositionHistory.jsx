@@ -96,12 +96,15 @@ export default function PositionHistory() {
   const formatDate = (timestamp) => {
     if (!timestamp) return '—';
 
-    const normalized =
-      typeof timestamp === 'string' && !timestamp.includes('Z')
-        ? timestamp + 'Z'
-        : timestamp;
+    let date;
 
-    const date = new Date(normalized);
+    if (typeof timestamp === 'number') {
+      // timestamp в миллисекундах
+      date = new Date(timestamp);
+    } else {
+      // строка — считаем, что это UTC
+      date = new Date(timestamp.endsWith('Z') ? timestamp : timestamp + 'Z');
+    }
 
     return date.toLocaleString('uz-UZ', {
       timeZone: 'Asia/Tashkent',
@@ -112,6 +115,7 @@ export default function PositionHistory() {
       minute: '2-digit'
     });
   };
+
 
 
   const formatDateUzs = (timestamp) => {
