@@ -105,6 +105,24 @@ export default function PositionHistory() {
     });
   };
 
+  const formatDateUzs = (timestamp) => {
+    if (!timestamp) return '—';
+
+    const date = new Date(timestamp);
+
+    // ⏰ вручную +5 часов для UZ
+    date.setHours(date.getHours() + 5);
+
+    return date.toLocaleString('uz-UZ', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+
 
   const formatMoney = (value) =>
     value.toLocaleString('uz-UZ', {
@@ -253,7 +271,7 @@ export default function PositionHistory() {
                       <Calendar size={14} />
                       Sana:
                     </span>
-                    <span className="detail-value">{formatDate(position.created_at || Date.now())}</span>
+                    <span className="detail-value">{formatDateUzs(position.created_at)}</span>
                   </div>
                 </div>
               </div>
