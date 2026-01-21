@@ -96,9 +96,21 @@ export default function PositionHistory() {
   const formatDate = (timestamp) => {
     if (!timestamp) return '—';
 
-    const date = new Date(timestamp + 'Z'); // 👈 КЛЮЧ
+    // Разбираем вручную как UTC
+    const [datePart, timePart] = timestamp.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hour, minute, second] = timePart.split(':');
 
-    return date.toLocaleString('uz-UZ', {
+    const dateUTC = new Date(Date.UTC(
+      year,
+      month - 1,
+      day,
+      Number(hour),
+      Number(minute),
+      Math.floor(Number(second))
+    ));
+
+    return dateUTC.toLocaleString('uz-UZ', {
       timeZone: 'Asia/Tashkent',
       day: '2-digit',
       month: '2-digit',
@@ -107,6 +119,7 @@ export default function PositionHistory() {
       minute: '2-digit'
     });
   };
+
 
 
 
