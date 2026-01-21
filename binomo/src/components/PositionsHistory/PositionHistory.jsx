@@ -96,15 +96,7 @@ export default function PositionHistory() {
   const formatDate = (timestamp) => {
     if (!timestamp) return '—';
 
-    let date;
-
-    if (typeof timestamp === 'number') {
-      // timestamp в миллисекундах
-      date = new Date(timestamp);
-    } else {
-      // строка — считаем, что это UTC
-      date = new Date(timestamp.endsWith('Z') ? timestamp : timestamp + 'Z');
-    }
+    const date = new Date(timestamp + 'Z'); // 👈 КЛЮЧ
 
     return date.toLocaleString('uz-UZ', {
       timeZone: 'Asia/Tashkent',
@@ -115,6 +107,7 @@ export default function PositionHistory() {
       minute: '2-digit'
     });
   };
+
 
 
 
@@ -255,7 +248,8 @@ export default function PositionHistory() {
             const profit = parseFloat(position.profit || 0);
             const roi = parseFloat(position.roi || 0);
             const isProfit = profit >= 0;
-
+            console.log('RAW created_at:', position.created_at);
+            console.log('Date parsed:', new Date(position.created_at).toString());
             return (
               <div key={index} className="position-card">
                 <div className="position-header">
