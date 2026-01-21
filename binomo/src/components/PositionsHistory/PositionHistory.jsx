@@ -98,7 +98,8 @@ export default function PositionHistory() {
     if (!timestamp) return '—';
     console.log('Formatting timestamp:', timestamp);
 
-    const time = DateTime.fromISO(timestamp) // <-- убрали { zone: 'utc' }
+    // Считаем, что timestamp с сервера — UTC
+    const time = DateTime.fromISO(timestamp, { zone: 'utc' }) 
                         .setZone('Asia/Tashkent')
                         .toFormat('dd/LL/yyyy, HH:mm');
 
